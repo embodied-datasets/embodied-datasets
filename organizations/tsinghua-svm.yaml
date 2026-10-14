@@ -1,0 +1,7 @@
+name: Tsinghua University, School of Vehicle and Mobility
+aliases: [Tsinghua SVM]
+type: university
+country: CN
+url: https://www.svm.tsinghua.edu.cn/
+description: Released the Griffin aerial-ground cooperative perception dataset.
+notes: Affiliation inferred from the authors' GitHub organization name and paper author list; confirm against the paper's affiliation footnotes.

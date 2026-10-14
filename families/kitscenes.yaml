@@ -1,0 +1,5 @@
+name: KITScenes
+tagline: KIT's European urban datasets recorded with the "Joy" research vehicle in Karlsruhe, Frankfurt and Sindelfingen.
+organizations: [kit-mrt]
+homepage: https://kitscenes.com/
+not_yet_recorded: [KITScenes LongTail]

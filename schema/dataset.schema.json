@@ -1,0 +1,1361 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/DanielDauner/embodied-datasets/blob/main/schema/dataset.schema.json",
+  "title": "Embodied Datasets – dataset record",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "aliases": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tagline": {
+      "type": "string",
+      "maxLength": 220,
+      "description": "One sentence, shown on cards and in search results."
+    },
+    "domain": {
+      "type": "string",
+      "enum": [
+        "driving"
+      ],
+      "description": "Robotics domain. Only driving for now; more will follow."
+    },
+    "family": {
+      "description": "Slug of the family record this dataset belongs to.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "string"
+    },
+    "release_date": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^\\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\\d|3[01]))?)?$"
+        },
+        {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2100
+        },
+        {}
+      ],
+      "description": "Date with flexible precision: YYYY, YYYY-MM or YYYY-MM-DD."
+    },
+    "last_update": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^\\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\\d|3[01]))?)?$"
+        },
+        {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2100
+        },
+        {}
+      ],
+      "description": "Date with flexible precision: YYYY, YYYY-MM or YYYY-MM-DD."
+    },
+    "organizations": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+        "description": "Record identifier: lowercase letters, digits and hyphens."
+      },
+      "description": "Slugs of organization records."
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "description": "Absolute http(s) URL."
+    },
+    "links": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "download": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri",
+            "description": "Absolute http(s) URL."
+          }
+        },
+        "code": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri",
+            "description": "Absolute http(s) URL."
+          }
+        },
+        "docs": {
+          "type": "string",
+          "format": "uri",
+          "description": "Absolute http(s) URL."
+        },
+        "challenge": {
+          "type": "string",
+          "format": "uri",
+          "description": "Absolute http(s) URL."
+        },
+        "leaderboard": {
+          "type": "string",
+          "format": "uri",
+          "description": "Absolute http(s) URL."
+        },
+        "discussion": {
+          "type": "string",
+          "format": "uri",
+          "description": "Absolute http(s) URL."
+        }
+      },
+      "additionalProperties": false
+    },
+    "papers": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "venue": {
+            "description": "Venue as cited, e.g. \"CVPR 2020\" or \"arXiv preprint\".",
+            "type": "string"
+          },
+          "year": {
+            "type": "integer",
+            "minimum": 1990,
+            "maximum": 2100
+          },
+          "arxiv": {
+            "description": "arXiv identifier, e.g. 1903.11027.",
+            "type": "string",
+            "pattern": "^\\d{4}\\.\\d{4,5}(v\\d+)?$"
+          },
+          "doi": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Absolute http(s) URL."
+          },
+          "bibtex": {
+            "type": "string"
+          },
+          "required_citation": {
+            "default": false,
+            "description": "True if the terms of use require citing this paper.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "title",
+          "year"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "availability": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "available",
+            "available-registration",
+            "available-application",
+            "partially-available",
+            "deprecated-but-downloadable",
+            "discontinued",
+            "superseded",
+            "unverified"
+          ],
+          "description": "Availability status, see vocabularies/status.yaml."
+        },
+        "last_verified": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            {}
+          ],
+          "description": "ISO date, YYYY-MM-DD."
+        },
+        "verified_by": {
+          "type": "string",
+          "enum": [
+            "human",
+            "agent"
+          ]
+        },
+        "access_methods": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "registration",
+              "application",
+              "email",
+              "cloud_bucket",
+              "requester_pays",
+              "torrent",
+              "hf_hub",
+              "hf_hub_gated",
+              "physical_media",
+              "source_code"
+            ]
+          }
+        },
+        "cost": {
+          "type": "string",
+          "enum": [
+            "free",
+            "free-academic",
+            "paid"
+          ]
+        },
+        "eligibility": {
+          "description": "Who may download, if restricted (academic only, country limits, ...).",
+          "type": "string"
+        },
+        "registration_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Absolute http(s) URL."
+        },
+        "evidence": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "The URL that was checked."
+              },
+              "checked": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {}
+                ],
+                "description": "When it was checked."
+              },
+              "wayback": {
+                "description": "Wayback Machine snapshot backing the observation.",
+                "type": "string",
+                "format": "uri"
+              },
+              "http_status": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "note": {
+                "description": "What was observed, in one or two sentences.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "url",
+              "checked"
+            ],
+            "additionalProperties": false
+          },
+          "description": "At least one dated observation backing the status."
+        },
+        "discontinuation_announcement": {
+          "type": "string",
+          "format": "uri",
+          "description": "Absolute http(s) URL."
+        },
+        "successor": {
+          "description": "Slug of the dataset that replaces this one.",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "mirrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "type": "string",
+                "description": "Who hosts the copy, e.g. \"Hugging Face (georghess)\"."
+              },
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Absolute http(s) URL."
+              },
+              "official": {
+                "type": "boolean",
+                "description": "True if the copy is endorsed by the dataset authors."
+              },
+              "subset": {
+                "description": "Which part of the dataset the mirror holds, if not all of it.",
+                "type": "string"
+              },
+              "license": {
+                "type": "string"
+              },
+              "last_verified": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {}
+                ],
+                "description": "ISO date, YYYY-MM-DD."
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "host",
+              "url",
+              "official"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "persistent_id": {
+          "type": "object",
+          "properties": {
+            "doi": {
+              "type": "string"
+            },
+            "zenodo": {
+              "type": "string"
+            },
+            "other": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "download_size": {
+          "type": "object",
+          "properties": {
+            "compressed_gb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "uncompressed_gb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "checksums_published": {
+          "type": "boolean"
+        },
+        "history": {
+          "description": "Dated availability events, oldest first.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^\\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\\d|3[01]))?)?$"
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 1900,
+                    "maximum": 2100
+                  },
+                  {}
+                ],
+                "description": "Date with flexible precision: YYYY, YYYY-MM or YYYY-MM-DD."
+              },
+              "status": {
+                "description": "Status that applied from this date on, if the event changed it.",
+                "type": "string",
+                "enum": [
+                  "available",
+                  "available-registration",
+                  "available-application",
+                  "partially-available",
+                  "deprecated-but-downloadable",
+                  "discontinued",
+                  "superseded",
+                  "unverified"
+                ]
+              },
+              "event": {
+                "type": "string",
+                "description": "What happened."
+              },
+              "source": {
+                "type": "string",
+                "format": "uri",
+                "description": "Absolute http(s) URL."
+              }
+            },
+            "required": [
+              "date",
+              "event"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "last_verified",
+        "verified_by",
+        "access_methods",
+        "cost",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "legal": {
+      "type": "object",
+      "properties": {
+        "licenses": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "SPDX identifier where one exists (CC-BY-NC-SA-4.0, MIT, Apache-2.0), otherwise a short custom id."
+              },
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Absolute http(s) URL."
+              },
+              "applies_to": {
+                "default": [
+                  "data"
+                ],
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "data",
+                    "annotations",
+                    "maps",
+                    "code",
+                    "reconstructions"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "terms_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Absolute http(s) URL."
+        },
+        "permissions": {
+          "default": {},
+          "description": "Plain-language reading of the data license. Null/absent means not assessed.",
+          "type": "object",
+          "properties": {
+            "commercial": {
+              "type": "boolean"
+            },
+            "redistribution": {
+              "type": "boolean"
+            },
+            "derivatives": {
+              "type": "boolean"
+            },
+            "attribution_required": {
+              "type": "boolean"
+            },
+            "share_alike": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "privacy": {
+          "description": "Anonymisation measures (face/plate blurring, GDPR notes).",
+          "type": "string"
+        },
+        "export_control": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "licenses"
+      ],
+      "additionalProperties": false
+    },
+    "collection": {
+      "type": "object",
+      "properties": {
+        "reality": {
+          "type": "string",
+          "enum": [
+            "real",
+            "synthetic",
+            "hybrid"
+          ]
+        },
+        "simulator": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "platform": {
+          "description": "Sensor platform or vehicle class, e.g. \"NVIDIA Hyperion 8\", \"heavy truck\", \"UAV + ground vehicle\".",
+          "type": "string"
+        },
+        "vehicle": {
+          "type": "string"
+        },
+        "num_vehicles": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "driving_mode": {
+          "type": "string",
+          "enum": [
+            "human",
+            "autonomous",
+            "teleoperated",
+            "mixed",
+            "expert-policy"
+          ]
+        },
+        "period": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\\d|3[01]))?)?$"
+                },
+                {
+                  "type": "integer",
+                  "minimum": 1900,
+                  "maximum": 2100
+                },
+                {}
+              ],
+              "description": "Date with flexible precision: YYYY, YYYY-MM or YYYY-MM-DD."
+            },
+            "end": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\\d|3[01]))?)?$"
+                },
+                {
+                  "type": "integer",
+                  "minimum": 1900,
+                  "maximum": 2100
+                },
+                {}
+              ],
+              "description": "Date with flexible precision: YYYY, YYYY-MM or YYYY-MM-DD."
+            }
+          },
+          "additionalProperties": false
+        },
+        "locations": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "country": {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$",
+                "description": "ISO 3166-1 alpha-2 country code."
+              },
+              "lat": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              "lon": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              }
+            },
+            "required": [
+              "country"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "locations_note": {
+          "description": "Use when the exact cities are not published.",
+          "type": "string"
+        },
+        "environment": {
+          "description": "urban, suburban, highway, rural, parking, ...",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "conditions": {
+          "description": "day, night, rain, snow, fog, ...",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "reality"
+      ],
+      "additionalProperties": false
+    },
+    "scale": {
+      "default": {
+        "log_unit": "logs"
+      },
+      "type": "object",
+      "properties": {
+        "logs": {
+          "description": "Number of logs / scenes / clips / sequences.",
+          "type": "number",
+          "minimum": 0
+        },
+        "log_unit": {
+          "default": "logs",
+          "description": "What a log is called in this dataset: scenes, clips, segments, sequences, routes.",
+          "type": "string"
+        },
+        "scene_duration_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "hours": {
+          "type": "number",
+          "minimum": 0
+        },
+        "km": {
+          "type": "number",
+          "minimum": 0
+        },
+        "frames": {
+          "type": "number",
+          "minimum": 0
+        },
+        "annotated_frames": {
+          "type": "number",
+          "minimum": 0
+        },
+        "boxes_3d": {
+          "type": "number",
+          "minimum": 0
+        },
+        "instances": {
+          "type": "number",
+          "minimum": 0
+        },
+        "map_area_km2": {
+          "type": "number",
+          "minimum": 0
+        },
+        "storage_tb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "modalities": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "ego_pose",
+          "camera",
+          "lidar",
+          "radar",
+          "hd_map",
+          "boxes_3d",
+          "traffic_lights",
+          "segmentation",
+          "trajectories",
+          "language",
+          "reconstruction"
+        ]
+      }
+    },
+    "sensors": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "camera",
+              "lidar",
+              "radar",
+              "imu",
+              "gnss",
+              "wheel_odometry",
+              "can",
+              "ultrasonic",
+              "thermal",
+              "event",
+              "microphone"
+            ]
+          },
+          "count": {
+            "description": "Number of sensors of this kind. Leave out when the dataset does not publish it.",
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "name": {
+            "description": "Role or group name, e.g. \"ring cameras\", \"top LiDAR\".",
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "hz": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "resolution": {
+            "type": "string"
+          },
+          "fov_deg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 360
+          },
+          "beams": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "range_m": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "ids": {
+            "description": "py123d sensor IDs (PCAM_F0, LIDAR_TOP, ...), used to draw the rig diagram.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "annotations": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "boxes_3d",
+              "boxes_2d",
+              "tracking_ids",
+              "semantic_seg_image",
+              "semantic_seg_lidar",
+              "instance_seg",
+              "panoptic_seg",
+              "occupancy",
+              "scene_flow",
+              "depth",
+              "lanes",
+              "drivable_area",
+              "traffic_light_state",
+              "trajectories",
+              "intents",
+              "keypoints",
+              "language_qa",
+              "reasoning",
+              "captions",
+              "primitives_3d"
+            ]
+          },
+          "classes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "hz": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "human",
+              "auto",
+              "hybrid"
+            ]
+          },
+          "coverage": {
+            "description": "Which part of the data carries this annotation, if not all.",
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "maps": {
+      "type": "object",
+      "properties": {
+        "available": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "hd_vector",
+            "raster",
+            "semantic",
+            "lanelet2",
+            "opendrive",
+            "none"
+          ]
+        },
+        "dimensions": {
+          "type": "string",
+          "enum": [
+            "2d",
+            "3d"
+          ]
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "per_location",
+            "per_log",
+            "global"
+          ]
+        },
+        "format": {
+          "type": "string"
+        },
+        "georeferenced": {
+          "type": "boolean"
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "available"
+      ],
+      "additionalProperties": false
+    },
+    "splits": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number",
+            "minimum": 0
+          },
+          "unit": {
+            "type": "string"
+          },
+          "hidden_ground_truth": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "benchmarks": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string",
+            "enum": [
+              "3d_detection",
+              "3d_tracking",
+              "2d_detection",
+              "semantic_segmentation",
+              "panoptic_segmentation",
+              "motion_forecasting",
+              "planning",
+              "end_to_end_driving",
+              "occupancy_prediction",
+              "map_perception",
+              "novel_view_synthesis",
+              "depth_estimation",
+              "visual_question_answering",
+              "cooperative_perception",
+              "scene_completion",
+              "simulation"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Absolute http(s) URL."
+          },
+          "eval_server": {
+            "description": "Whether the evaluation server still accepts submissions.",
+            "type": "string",
+            "enum": [
+              "open",
+              "closed",
+              "unknown"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "task"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "formats": {
+      "default": {
+        "loaders": []
+      },
+      "type": "object",
+      "properties": {
+        "raw": {
+          "description": "On-disk formats of the release: rosbag, TFRecord, parquet, JPEG folders, ...",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "devkit": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "Absolute http(s) URL."
+            },
+            "language": {
+              "type": "string"
+            },
+            "maintained": {
+              "type": "boolean"
+            },
+            "notes": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "url"
+          ],
+          "additionalProperties": false
+        },
+        "loaders": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Absolute http(s) URL."
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "known_issues": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "tooling": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "py123d": {
+          "type": "object",
+          "properties": {
+            "configs": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Hydra dataset configs, e.g. nuscenes, nuscenes-stream."
+            },
+            "extra": {
+              "description": "pip extra, e.g. py123d[nuscenes].",
+              "type": "string"
+            },
+            "docs": {
+              "type": "string",
+              "format": "uri",
+              "description": "Absolute http(s) URL."
+            },
+            "status": {
+              "default": "stable",
+              "type": "string",
+              "enum": [
+                "stable",
+                "experimental"
+              ]
+            },
+            "notes": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "configs",
+            "docs"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "relations": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "predecessor",
+              "successor",
+              "derived_from",
+              "extends",
+              "shares_rig_with",
+              "subset_of",
+              "companion",
+              "reconstruction_of"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "description": "Slug of another record, or a free-text name when external is true."
+          },
+          "external": {
+            "default": false,
+            "type": "boolean"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Absolute http(s) URL."
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "target"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "figures": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "sensor_timeline": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "description": "Path relative to the record directory, e.g. assets/sensor_timeline.svg."
+            },
+            "caption": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string",
+              "format": "uri",
+              "description": "Where the figure comes from."
+            },
+            "license": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "file",
+            "source"
+          ],
+          "additionalProperties": false
+        },
+        "rig": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "description": "Path relative to the record directory, e.g. assets/sensor_timeline.svg."
+            },
+            "caption": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string",
+              "format": "uri",
+              "description": "Where the figure comes from."
+            },
+            "license": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "file",
+            "source"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "community": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "semantic_scholar": {
+          "type": "string"
+        },
+        "openalex": {
+          "type": "string"
+        },
+        "papers_with_code": {
+          "type": "string",
+          "format": "uri",
+          "description": "Absolute http(s) URL."
+        },
+        "huggingface": {
+          "description": "Hugging Face dataset id, e.g. nvidia/PhysicalAI-Autonomous-Vehicles.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sources": {
+      "default": {},
+      "description": "Field path -> URL that backs it, e.g. \"scale.hours\": \"https://...\". Record-level evidence lives in availability.evidence.",
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "format": "uri",
+        "description": "Absolute http(s) URL."
+      }
+    },
+    "curation": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            {}
+          ],
+          "description": "ISO date, YYYY-MM-DD."
+        },
+        "updated": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            {}
+          ],
+          "description": "ISO date, YYYY-MM-DD."
+        },
+        "contributors": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confidence": {
+          "description": "Overall confidence in the record.",
+          "type": "string",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "created",
+        "updated",
+        "contributors",
+        "schema_version"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "name",
+    "tagline",
+    "domain",
+    "organizations",
+    "homepage",
+    "availability",
+    "legal",
+    "collection",
+    "modalities",
+    "maps",
+    "curation"
+  ],
+  "additionalProperties": false,
+  "description": "One autonomous-driving (or robotics) dataset. One file per dataset at datasets/<slug>/dataset.yaml."
+}

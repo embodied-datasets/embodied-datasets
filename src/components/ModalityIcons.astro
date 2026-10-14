@@ -1,0 +1,18 @@
+---
+import Icon from './Icon.astro';
+import { MODALITIES } from '../schema/vocab.ts';
+interface Props { modalities: string[]; size?: 'sm' | 'lg'; showAll?: boolean }
+const { modalities, size = 'sm', showAll = false } = Astro.props;
+const ICONS: Record<string, string> = {
+  ego_pose: 'ego', camera: 'camera', lidar: 'lidar', radar: 'radar', hd_map: 'map', boxes_3d: 'box',
+  traffic_lights: 'traffic-light', segmentation: 'segmentation', trajectories: 'trajectory', language: 'language', reconstruction: 'reconstruction',
+};
+const list = showAll ? MODALITIES : MODALITIES.filter((m) => modalities.includes(m.id));
+---
+<span class:list={['mods', { lg: size === 'lg' }]}>
+  {list.map((m) => (
+    <span class:list={['m', { off: !modalities.includes(m.id) }]} title={`${m.label}${modalities.includes(m.id) ? '' : ' (not available)'}`}>
+      <Icon name={ICONS[m.id] ?? 'info'} />
+    </span>
+  ))}
+</span>

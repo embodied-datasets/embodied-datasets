@@ -1,0 +1,14 @@
+---
+import Base from '../../layouts/Base.astro';
+import WorldMap from '../../components/WorldMap.astro';
+import { getDatasets } from '../../lib/data.ts';
+const datasets = await getDatasets();
+const real = datasets.filter((d) => d.data.collection.reality !== 'synthetic');
+---
+<Base title="Recording map" description="Where the recorded driving datasets were collected.">
+  <div class="page-head">
+    <h1>Where the data was recorded</h1>
+    <p class="lead">Cities with published recording locations. Dot size grows with the number of datasets recorded there; synthetic datasets have no location.</p>
+  </div>
+  <WorldMap datasets={real} />
+</Base>

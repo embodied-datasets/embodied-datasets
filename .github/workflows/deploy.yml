@@ -1,0 +1,60 @@
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Validate records (schema, cross-references)
+        run: npm run validate
+      - name: Lint prose for bare numbers (warnings only)
+        run: npm run lint:prose
+      - name: Check that the exported JSON Schema is up to date
+        run: |
+          npm run schema
+          git diff --exit-code -- schema || (echo "::error::schema/*.json is stale – run 'npm run schema' and commit the result" && exit 1)
+      - name: Build site
+        env:
+          # Project site on GitHub Pages: https://<owner>.github.io/<repo>/
+          # Set a repository variable SITE_URL / SITE_BASE to override (e.g. for a custom domain: SITE_BASE=/).
+          SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io', github.repository_owner) }}
+          SITE_BASE: ${{ vars.SITE_BASE || format('/{0}', github.event.repository.name) }}
+        run: |
+          export SITE_URL="$(echo "$SITE_URL" | tr '[:upper:]' '[:lower:]')"
+          echo "Building for $SITE_URL$SITE_BASE"
+          npm run build
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: dist
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

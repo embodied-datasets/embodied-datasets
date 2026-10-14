@@ -1,0 +1,34 @@
+# High-level modalities used for filters, cards and the comparison table.
+- id: ego_pose
+  label: Ego pose
+  description: Ego-vehicle poses and (possibly inferred) dynamics.
+- id: camera
+  label: Camera
+  description: Raw camera images or video.
+- id: lidar
+  label: LiDAR
+  description: LiDAR point clouds.
+- id: radar
+  label: Radar
+  description: Radar detections or point clouds.
+- id: hd_map
+  label: HD map
+  description: Vector or raster map data (lanes, crosswalks, drivable area, ...).
+- id: boxes_3d
+  label: 3D boxes
+  description: 3D bounding boxes of traffic participants.
+- id: traffic_lights
+  label: Traffic lights
+  description: Per-timestep traffic-light states.
+- id: segmentation
+  label: Segmentation
+  description: Semantic, instance or panoptic segmentation for images or point clouds.
+- id: trajectories
+  label: Trajectories
+  description: Agent trajectories or motion-forecasting labels.
+- id: language
+  label: Language
+  description: Captions, question answering, reasoning or driving-decision text.
+- id: reconstruction
+  label: Neural reconstruction
+  description: Renderable scene reconstructions (e.g. 3D Gaussian splats) instead of recorded frames.

@@ -1,0 +1,58 @@
+---
+/** Release-year timeline, one lane per family (or per dataset without a family). */
+import type { DatasetEntry, FamilyEntry } from '../lib/data.ts';
+import { statusOf } from '../lib/data.ts';
+import { url, yearOf } from '../lib/site.ts';
+interface Props { datasets: DatasetEntry[]; families: FamilyEntry[]; compact?: boolean }
+const { datasets, families, compact = false } = Astro.props;
+const famLabel = new Map(families.map((f) => [f.id, f.data.name.length > 24 && f.data.aliases[0] ? f.data.aliases[0] : f.data.name]));
+type Item = { entry: DatasetEntry; year: number; end?: number; lane: string };
+const items: Item[] = datasets
+  .map((entry) => ({ entry, year: yearOf(entry.data.release_date) ?? NaN, end: yearOf(entry.data.last_update), lane: entry.data.family ?? '_standalone' }))
+  .filter((i) => Number.isFinite(i.year));
+const lanes = [...new Set(items.sort((a, b) => a.year - b.year).map((i) => i.lane))];
+const laneLabel = (l: string) => (l === '_standalone' ? 'Standalone' : famLabel.get(l) ?? l);
+const minYear = Math.min(...items.map((i) => i.year)) - 1;
+const maxYear = Math.max(...items.map((i) => i.end ?? i.year), new Date().getFullYear()) + 1;
+const LEFT = 170, RIGHT = 24, TOP = 28, ROW = compact ? 30 : 36;
+const W = 1000;
+const plotW = W - LEFT - RIGHT;
+const H = TOP + lanes.length * ROW + 10;
+const xOf = (y: number) => LEFT + ((y - minYear) / (maxYear - minYear)) * plotW;
+const years = Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i);
+const COLOR: Record<string, string> = { green: 'var(--c-green)', blue: 'var(--c-blue)', amber: 'var(--c-amber)', orange: 'var(--c-orange)', vermilion: 'var(--c-vermilion)', red: 'var(--c-red)', purple: 'var(--c-purple)', gray: 'var(--c-gray)' };
+---
+<svg class="svg-timeline" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Release timeline of the recorded datasets">
+  {years.map((y) => (
+    <g>
+      <line x1={xOf(y)} x2={xOf(y)} y1={TOP - 8} y2={H - 6} stroke="var(--border)" stroke-width={y % 5 === 0 ? 1.2 : 0.6} />
+      {(y % (compact ? 2 : 1) === 0) && <text x={xOf(y)} y={TOP - 12} text-anchor="middle" font-size="11" fill="var(--muted)">{y}</text>}
+    </g>
+  ))}
+  {lanes.map((lane, i) => {
+    const y = TOP + i * ROW + ROW / 2;
+    const laneItems = items.filter((it) => it.lane === lane);
+    return (
+      <g>
+        <line x1={LEFT} x2={W - RIGHT} y1={y} y2={y} stroke="var(--border)" stroke-width="0.6" stroke-dasharray="2 4" />
+        <text x={LEFT - 10} y={y + 4} text-anchor="end" font-size="11.5" fill="var(--text-2)" font-weight="600">{laneLabel(lane)}</text>
+        {laneItems.map((it, j) => {
+          const st = statusOf(it.entry.data);
+          const x = xOf(it.year);
+          const x2 = it.end && it.end > it.year ? xOf(it.end) : undefined;
+          const dy = laneItems.length > 1 ? (j % 2 === 0 ? -9 : 9) : -9;
+          const label = it.entry.data.name.replace('Waymo Open Dataset – ', 'WOD ').replace('NVIDIA Physical AI Autonomous Vehicles', 'Physical AI AV').replace(' (PhysicalAI-AV NCore)', '').replace(' (PhysicalAI-AV NuRec)', '');
+          const flip = x + 9 + label.length * 6.3 > W - RIGHT;
+          return (
+            <a href={url(`/datasets/${it.entry.id}/`)}>
+              <title>{it.entry.data.name} · {it.year}{it.end ? `–${it.end}` : ''} · {st.label}</title>
+              {x2 && <line x1={x} x2={x2} y1={y} y2={y} stroke={COLOR[st.color ?? 'gray']} stroke-width="3" stroke-opacity="0.35" stroke-linecap="round" />}
+              <circle cx={x} cy={y} r="6" fill={COLOR[st.color ?? 'gray']} stroke="var(--bg-elev)" stroke-width="2" />
+              <text x={flip ? x - 9 : x + 9} y={y + dy + 4} font-size="11" fill="var(--text)" text-anchor={flip ? 'end' : 'start'}>{label}</text>
+            </a>
+          );
+        })}
+      </g>
+    );
+  })}
+</svg>

@@ -1,0 +1,33 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getDatasets, getFamilies, getOrganizations } from '../../lib/data.ts';
+import { url, flag, countryName } from '../../lib/site.ts';
+const [datasets, families, orgs] = await Promise.all([getDatasets(), getFamilies(), getOrganizations()]);
+const TYPE: Record<string, string> = { company: 'Company', university: 'University', research_institute: 'Research institute', lab: 'Lab', government: 'Government', community: 'Community', individual: 'Individual' };
+---
+<Base title="Organizations" description="Companies, universities and labs that create and host the recorded datasets.">
+  <div class="page-head">
+    <h1>Organizations</h1>
+    <p class="lead">Who makes and hosts the data. A defunct organization is the single biggest predictor that a dataset will disappear, so it is tracked explicitly.</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Organization</th><th>Type</th><th>Country</th><th>Datasets</th><th>Families</th></tr></thead>
+      <tbody>
+        {orgs.map((o) => {
+          const ds = datasets.filter((d) => d.data.organizations.includes(o.id));
+          const fs = families.filter((f) => f.data.organizations.includes(o.id));
+          return (
+            <tr>
+              <td><a href={url(`/organizations/${o.id}/`)}><b>{o.data.name}</b></a>{o.data.defunct && <span class="badge red" style="margin-left:0.5rem">defunct</span>}{o.data.aliases.length > 0 && <div class="small muted">{o.data.aliases.join(', ')}</div>}</td>
+              <td>{TYPE[o.data.type] ?? o.data.type}</td>
+              <td>{o.data.country ? `${flag(o.data.country)} ${countryName(o.data.country)}` : '–'}</td>
+              <td>{ds.map((d, i) => <span><a href={url(`/datasets/${d.id}/`)}>{d.data.name}</a>{i < ds.length - 1 ? ', ' : ''}</span>)}</td>
+              <td>{fs.map((f, i) => <span><a href={url(`/families/${f.id}/`)}>{f.data.name}</a>{i < fs.length - 1 ? ', ' : ''}</span>)}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+</Base>

@@ -1,0 +1,6 @@
+name: Autonomous Vision Group (University of Tübingen & MPI for Intelligent Systems)
+aliases: [AVG, cvlibs]
+type: lab
+country: DE
+url: https://www.cvlibs.net/
+description: Andreas Geiger's group, home of the KITTI benchmarks and KITTI-360.

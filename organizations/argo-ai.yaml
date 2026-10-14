@@ -1,0 +1,6 @@
+name: Argo AI
+type: company
+country: US
+url: https://www.argoverse.org/
+defunct: true
+description: Self-driving company backed by Ford and Volkswagen, shut down in October 2022. The Argoverse datasets it created remain hosted on a public S3 bucket maintained by the Argoverse team.

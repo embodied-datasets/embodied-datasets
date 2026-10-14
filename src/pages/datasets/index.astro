@@ -1,0 +1,22 @@
+---
+import Base from '../../layouts/Base.astro';
+import DatasetTable from '../../components/DatasetTable.astro';
+import { getDatasets, getOrganizations } from '../../lib/data.ts';
+import { url } from '../../lib/site.ts';
+const [datasets, orgs] = await Promise.all([getDatasets(), getOrganizations()]);
+---
+<Base title="Datasets" description="Filterable comparison of all recorded autonomous driving datasets: availability, sensors, annotations, maps, scale and licences.">
+  <div class="page-head">
+    <h1>Datasets</h1>
+    <p class="lead">
+      All {datasets.length} recorded datasets side by side. Click a column header to sort, use the chips to require a
+      modality or an availability status. Counts are sensors per vehicle with their rate in Hz; "3D box" shows the
+      annotation rate.
+    </p>
+  </div>
+  <DatasetTable datasets={datasets} orgs={orgs} />
+  <p class="small muted" style="margin-top:1.5rem">
+    Scale figures (hours, km, logs) are measured from the released data by <a href="https://github.com/kesai-labs/py123d#-supported-datasets" rel="noopener">py123d</a> where available and otherwise taken from the dataset's own documentation; every record names its sources.
+    Need the raw data? <a href={url('/export/datasets.json')}>JSON</a> · <a href={url('/export/datasets.csv')}>CSV</a>.
+  </p>
+</Base>

@@ -1,0 +1,9 @@
+---
+interface Props { value: string | number; label: string; sub?: string; class?: string }
+const { value, label, sub, class: cls } = Astro.props;
+---
+<div class:list={['tile', cls]}>
+  <div class="num">{value}</div>
+  <div class="lbl">{label}</div>
+  {sub && <div class="sub">{sub}</div>}
+</div>

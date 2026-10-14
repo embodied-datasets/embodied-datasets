@@ -1,0 +1,10 @@
+name: Waymo Open Dataset
+aliases: [WOD]
+tagline: Waymo's public releases, split into a sensor-level Perception dataset and a large-scale Motion dataset.
+organizations: [waymo]
+homepage: https://waymo.com/open/
+description: |
+  Both datasets are distributed under the Waymo Dataset License Agreement for Non-Commercial Use and require a
+  Google account. The Perception dataset carries raw sensor data; the Motion dataset carries auto-labelled tracks,
+  maps and traffic-light states without raw sensors.
+not_yet_recorded: [Waymo Open Dataset – End-to-End Driving (2025), WOMD-LiDAR]

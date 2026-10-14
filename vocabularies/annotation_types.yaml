@@ -1,0 +1,40 @@
+- id: boxes_3d
+  label: 3D bounding boxes
+- id: boxes_2d
+  label: 2D bounding boxes
+- id: tracking_ids
+  label: Tracking identities
+- id: semantic_seg_image
+  label: Image semantic segmentation
+- id: semantic_seg_lidar
+  label: LiDAR semantic segmentation
+- id: instance_seg
+  label: Instance segmentation
+- id: panoptic_seg
+  label: Panoptic segmentation
+- id: occupancy
+  label: Occupancy
+- id: scene_flow
+  label: Scene flow
+- id: depth
+  label: Depth
+- id: lanes
+  label: Lanes / lane graph
+- id: drivable_area
+  label: Drivable area
+- id: traffic_light_state
+  label: Traffic-light state
+- id: trajectories
+  label: Trajectories / motion forecasting
+- id: intents
+  label: Intents / route commands
+- id: keypoints
+  label: Keypoints
+- id: language_qa
+  label: Language / question answering
+- id: reasoning
+  label: Reasoning annotations
+- id: captions
+  label: Captions
+- id: primitives_3d
+  label: 3D primitives (cuboids, ellipsoids)

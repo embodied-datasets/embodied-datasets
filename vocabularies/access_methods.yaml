@@ -1,0 +1,22 @@
+- id: direct
+  label: Direct download
+- id: registration
+  label: Website registration
+- id: application
+  label: Application / approval
+- id: email
+  label: Request by e-mail
+- id: cloud_bucket
+  label: Cloud bucket
+- id: requester_pays
+  label: Requester-pays bucket
+- id: torrent
+  label: Torrent
+- id: hf_hub
+  label: Hugging Face Hub
+- id: hf_hub_gated
+  label: Hugging Face Hub (gated)
+- id: physical_media
+  label: Physical media
+- id: source_code
+  label: Generated from source / simulator

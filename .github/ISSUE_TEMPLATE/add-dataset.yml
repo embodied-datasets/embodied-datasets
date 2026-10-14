@@ -1,0 +1,39 @@
+name: Add a dataset
+description: Request a record for a dataset that is missing from the wiki.
+title: "[dataset] "
+labels: [dataset-request]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Dataset name
+      placeholder: e.g. Lyft Level 5 Perception
+    validations:
+      required: true
+  - type: input
+    id: homepage
+    attributes:
+      label: Homepage or download page URL
+    validations:
+      required: true
+  - type: input
+    id: paper
+    attributes:
+      label: Paper URL (arXiv or DOI)
+  - type: dropdown
+    id: status
+    attributes:
+      label: Is the data downloadable today, as far as you know?
+      options:
+        - Yes, without an account
+        - Yes, after registration or gating
+        - Only via mirrors / official source gone
+        - No
+        - Unknown
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Mirrors, licence quirks, related datasets, a loader you use.

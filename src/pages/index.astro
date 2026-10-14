@@ -1,0 +1,101 @@
+---
+import Base from '../layouts/Base.astro';
+import DatasetCard from '../components/DatasetCard.astro';
+import StatTile from '../components/StatTile.astro';
+import Timeline from '../components/Timeline.astro';
+import Icon from '../components/Icon.astro';
+import { getDatasets, getFamilies, getOrganizations, countries } from '../lib/data.ts';
+import { STATUS } from '../schema/vocab.ts';
+import { SITE, url, fmtCompact } from '../lib/site.ts';
+
+const [datasets, families, orgs] = await Promise.all([getDatasets(), getFamilies(), getOrganizations()]);
+const orgName = (id: string) => orgs.find((o) => o.id === id)?.data.name ?? id;
+const n = datasets.length;
+const byStatus = STATUS.map((s) => ({ s, items: datasets.filter((d) => d.data.availability.status === s.id) })).filter((x) => x.items.length > 0);
+const count = (...ids: string[]) => datasets.filter((d) => ids.includes(d.data.availability.status)).length;
+const open = count('available');
+const registration = count('available-registration', 'available-application');
+const gone = count('deprecated-but-downloadable', 'partially-available', 'discontinued', 'superseded');
+const hours = datasets.reduce((acc, d) => acc + (d.data.scale.hours ?? 0), 0);
+const countrySet = new Set(datasets.flatMap((d) => countries(d.data)));
+const latestVerified = datasets.map((d) => d.data.availability.last_verified).sort().at(-1);
+---
+<Base title={SITE.name}>
+  <section class="hero">
+    <div class="eyebrow">Robot datasets wiki · driving first</div>
+    <h1>Which driving datasets can you still download?</h1>
+    <p class="lead">
+      {SITE.name} keeps one schema-validated record per autonomous driving dataset: sensors, annotations, maps,
+      licences, and above all a dated, evidence-backed <strong>availability status</strong>. Datasets disappear quietly;
+      this wiki notices.
+    </p>
+    <div class="row" style="margin-top:1.2rem; gap:0.6rem">
+      <a class="btn primary" href={url('/datasets/')}><Icon name="database" size={16} /> Browse datasets</a>
+      <a class="btn" href={url('/status/')}><Icon name="shield" size={16} /> Availability report</a>
+      <a class="btn" href={url('/contribute/')}><Icon name="edit" size={16} /> Contribute a record</a>
+    </div>
+  </section>
+
+  <div class="grid tiles">
+    <StatTile value={n} label="datasets recorded" sub="every dataset py123d supports" />
+    <StatTile value={open} label="open, no account needed" />
+    <StatTile value={registration} label="free after registration" />
+    <StatTile value={gone} label="official source gone" sub="mirror-only, partial or discontinued" />
+    <StatTile value={fmtCompact(Math.round(hours))} label="hours of driving tracked" />
+    <StatTile value={countrySet.size} label="countries with recordings" />
+  </div>
+
+  <section class="section">
+    <h2>Availability at a glance</h2>
+    <div class="status-bar" role="img" aria-label="Share of datasets per availability status">
+      {byStatus.map((x) => <span class={`c-${x.s.color}`} style={`width:${((x.items.length / n) * 100).toFixed(1)}%`} title={`${x.s.label}: ${x.items.length}`}></span>)}
+    </div>
+    <div class="legend">
+      {byStatus.map((x) => <span><span class={`sw c-${x.s.color}`}></span>{x.s.label} · {x.items.length}</span>)}
+    </div>
+    <p style="margin-top:0.9rem">
+      Every status is backed by a dated check of the download page, the hosting API or an archived snapshot.
+      Official sources that vanished (PandaSet's download page, for instance) are tracked with their mirrors and a
+      history of what happened when. Last verification in the database: <b>{latestVerified}</b>.{' '}
+      <a href={url('/status/')}>Read the full availability report →</a>
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Datasets</h2>
+    <div class="grid cards">
+      {datasets.map((e) => <DatasetCard entry={e} orgNames={e.data.organizations.map(orgName)} />)}
+    </div>
+    <p style="margin-top:1rem"><a href={url('/datasets/')}>Compare them side by side in the filterable table →</a></p>
+  </section>
+
+  <section class="section">
+    <h2>Release timeline</h2>
+    <div class="card" style="padding:1rem 0.75rem">
+      <Timeline datasets={datasets} families={families} compact />
+    </div>
+    <p class="small muted" style="margin-top:0.5rem">Dots mark the first release, coloured by today's availability; bars show the span to the last known update. <a href={url('/timeline/')}>Full timeline →</a></p>
+  </section>
+
+  <section class="section">
+    <h2>How this wiki works</h2>
+    <div class="grid cards">
+      <div class="card">
+        <h3 style="margin-top:0"><Icon name="database" size={18} /> One file per dataset</h3>
+        <p class="small">Facts live in <code>datasets/&lt;slug&gt;/dataset.yaml</code>, prose in an optional <code>page.md</code>. Numbers in prose are shortcodes into the record, so there is one place to fix a fact.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0"><Icon name="shield" size={18} /> Validated before merge</h3>
+        <p class="small">A strict schema rejects unknown fields and bad enums; cross-references (families, organizations, successors) are checked in CI. Invalid records cannot be merged.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0"><Icon name="history" size={18} /> Evidence, not vibes</h3>
+        <p class="small">Each availability status carries a verification date, who verified it, the URL that was checked and, where possible, a Wayback snapshot. Status changes are recorded as dated history.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0"><Icon name="code" size={18} /> Tooling</h3>
+        <p class="small">All recorded datasets are readable through <a href={SITE.py123d} rel="noopener">py123d</a>, which converts them into one Arrow format with a single API. Records link the matching conversion configs.</p>
+      </div>
+    </div>
+  </section>
+</Base>

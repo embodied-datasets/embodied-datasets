@@ -1,0 +1,37 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getDatasets, getFamilies, getOrganizations } from '../../lib/data.ts';
+import { url } from '../../lib/site.ts';
+import StatusBadge from '../../components/StatusBadge.astro';
+const [datasets, families, orgs] = await Promise.all([getDatasets(), getFamilies(), getOrganizations()]);
+const orgName = (id: string) => orgs.find((o) => o.id === id)?.data.name ?? id;
+const standalone = datasets.filter((d) => !d.data.family);
+---
+<Base title="Dataset families" description="Groups of related datasets: nuScenes, Waymo Open Dataset, Argoverse 2, NVIDIA Physical AI AV, CARLA and more.">
+  <div class="page-head">
+    <h1>Families</h1>
+    <p class="lead">Datasets rarely come alone. A family groups releases that share an organization, a sensor rig or a licence, and lists the members that still lack a record.</p>
+  </div>
+  <div class="grid cards" style="margin-top:1rem">
+    {families.map((f) => {
+      const members = datasets.filter((d) => d.data.family === f.id);
+      return (
+        <a class="card link" href={url(`/families/${f.id}/`)}>
+          <h3 style="margin:0 0 0.3rem">{f.data.name}</h3>
+          <div class="small muted" style="margin-bottom:0.5rem">{f.data.organizations.map(orgName).join(', ')}</div>
+          <p class="small" style="color:var(--text-2)">{f.data.tagline}</p>
+          <div class="row" style="gap:0.35rem">
+            {members.map((m) => <span class="row" style="gap:0.25rem"><span class="tag">{m.data.name}</span><StatusBadge status={m.data.availability.status} short /></span>)}
+          </div>
+          {f.data.not_yet_recorded.length > 0 && <p class="small muted" style="margin:0.6rem 0 0">Missing records: {f.data.not_yet_recorded.join(', ')}</p>}
+        </a>
+      );
+    })}
+  </div>
+  {standalone.length > 0 && (
+    <section class="section">
+      <h2>Standalone datasets</h2>
+      <div class="row">{standalone.map((d) => <a class="tag" href={url(`/datasets/${d.id}/`)}>{d.data.name}</a>)}</div>
+    </section>
+  )}
+</Base>

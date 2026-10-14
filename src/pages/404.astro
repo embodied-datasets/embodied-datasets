@@ -1,0 +1,10 @@
+---
+import Base from '../layouts/Base.astro';
+import { url } from '../lib/site.ts';
+---
+<Base title="Page not found">
+  <div class="hero">
+    <h1>Not found</h1>
+    <p class="lead">That page does not exist, or the dataset slug changed. <a href={url('/datasets/')}>Browse all datasets</a> or use the search.</p>
+  </div>
+</Base>

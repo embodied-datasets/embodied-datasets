@@ -1,0 +1,358 @@
+---
+import Base from '../../layouts/Base.astro';
+import Section from '../../components/Section.astro';
+import StatusBanner from '../../components/StatusBanner.astro';
+import StatusBadge from '../../components/StatusBadge.astro';
+import ModalityIcons from '../../components/ModalityIcons.astro';
+import RigDiagram from '../../components/RigDiagram.astro';
+import DatasetCard from '../../components/DatasetCard.astro';
+import Icon from '../../components/Icon.astro';
+import { getDatasets, getFamilies, getOrganizations, getProse, statusOf, countries, primaryLicense, isDownloadable } from '../../lib/data.ts';
+import type { DatasetEntry } from '../../lib/data.ts';
+import { SITE, url, fmtNum, fmtDate, flag, countryName } from '../../lib/site.ts';
+import { renderProse } from '../../lib/markdown.ts';
+import { ANNOTATION_BY_ID, SENSOR_BY_ID, ACCESS_BY_ID, RELATION_BY_ID, TASK_BY_ID, STATUS_BY_ID } from '../../schema/vocab.ts';
+
+export async function getStaticPaths() {
+  const datasets = await getDatasets();
+  return datasets.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+interface Props { entry: DatasetEntry }
+const { entry } = Astro.props;
+const d = entry.data;
+const slug = entry.id;
+const [datasets, families, orgs] = await Promise.all([getDatasets(), getFamilies(), getOrganizations()]);
+const orgMap = new Map(orgs.map((o) => [o.id, o]));
+const dsMap = new Map(datasets.map((x) => [x.id, x]));
+const family = d.family ? families.find((f) => f.id === d.family) : undefined;
+const siblings = family ? datasets.filter((x) => x.data.family === family.id && x.id !== slug) : [];
+const relatedInternal = d.relations.filter((r) => !r.external && dsMap.has(r.target)).map((r) => dsMap.get(r.target)!).filter((x) => x.id !== slug && !siblings.includes(x));
+const prose = await getProse(slug);
+const proseHtml = prose ? renderProse(prose, d, `datasets/${slug}/page.md`) : undefined;
+const figures = import.meta.glob('/datasets/*/assets/*', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const figUrl = (file: string) => figures[`/datasets/${slug}/${file}`];
+const status = statusOf(d);
+const av = d.availability;
+const lic = primaryLicense(d);
+const cc = countries(d);
+const orgName = (id: string) => orgMap.get(id)?.data.name ?? id;
+const downloadable = isDownloadable(d);
+const downloadUrl = d.links.download?.[0] ?? av.mirrors[0]?.url;
+const paper = d.papers[0];
+const codeUrl = d.links.code?.[0];
+const editUrl = `${SITE.repo}/edit/main/datasets/${slug}/dataset.yaml`;
+const viewUrl = `${SITE.repo}/blob/main/datasets/${slug}/dataset.yaml`;
+const historyUrl = `${SITE.repo}/commits/main/datasets/${slug}`;
+const perm = d.legal.permissions;
+const permList: [keyof typeof perm, string][] = [['commercial', 'Commercial use'], ['redistribution', 'Redistribution'], ['derivatives', 'Derivative works'], ['attribution_required', 'Attribution required'], ['share_alike', 'Share-alike'],];
+const scaleTiles: [string, string | undefined][] = [
+  ['hours of data', d.scale.hours !== undefined ? fmtNum(d.scale.hours) : undefined],
+  ['km driven', d.scale.km !== undefined ? fmtNum(d.scale.km) : undefined],
+  [d.scale.log_unit, d.scale.logs !== undefined ? fmtNum(d.scale.logs) : undefined],
+  ['s per ' + d.scale.log_unit.replace(/s$/, ''), d.scale.scene_duration_s !== undefined ? fmtNum(d.scale.scene_duration_s) : undefined],
+  ['frames', d.scale.frames !== undefined ? fmtNum(d.scale.frames) : undefined],
+  ['annotated frames', d.scale.annotated_frames !== undefined ? fmtNum(d.scale.annotated_frames) : undefined],
+  ['3D boxes', d.scale.boxes_3d !== undefined ? fmtNum(d.scale.boxes_3d) : undefined],
+  ['km² of map', d.scale.map_area_km2 !== undefined ? fmtNum(d.scale.map_area_km2) : undefined],
+  ['TB on disk', d.scale.storage_tb !== undefined ? fmtNum(d.scale.storage_tb) : undefined],
+];
+const sensorDetail = (s: (typeof d.sensors)[number]) => [s.resolution, s.beams ? `${s.beams} beams` : undefined, s.fov_deg ? `${s.fov_deg}° FOV` : undefined, s.range_m ? `${s.range_m} m range` : undefined].filter(Boolean).join(' · ');
+const pyConfig = d.tooling.py123d?.configs[0];
+const timelineFig = d.figures.sensor_timeline;
+---
+<Base title={d.name} description={d.tagline}>
+  <nav class="breadcrumb" data-pagefind-ignore><a href={url('/')}>Home</a> › <a href={url('/datasets/')}>Datasets</a> › <span>{d.name}</span></nav>
+  <div class="page-head" style="padding-top:0">
+    <div class="row" style="gap:0.5rem; margin-bottom:0.5rem">
+      <StatusBadge status={av.status} />
+      <span class:list={['tag', d.collection.reality]}>{d.collection.reality}{d.collection.simulator ? ` · ${d.collection.simulator.name}` : ''}</span>
+      {family && <a class="tag" href={url(`/families/${family.id}/`)}>{family.data.name}</a>}
+      <span class="tag" data-pagefind-ignore>{d.domain}</span>
+    </div>
+    <h1 data-pagefind-meta="title">{d.name}</h1>
+    {d.aliases.length > 0 && <div class="muted small" style="margin-top:-0.2rem">Also known as {d.aliases.join(', ')}</div>}
+    <p class="lead" style="margin-top:0.5rem">{d.tagline}</p>
+    <div class="row small muted" style="gap:0.3rem">
+      <span>by</span>
+      {d.organizations.map((o, i) => <span><a href={url(`/organizations/${o}/`)}>{orgName(o)}</a>{i < d.organizations.length - 1 ? ',' : ''}</span>)}
+      {d.release_date && <span>· released {fmtDate(d.release_date)}</span>}
+      {d.last_update && <span>· last update {fmtDate(d.last_update)}</span>}
+    </div>
+  </div>
+
+  <StatusBanner dataset={d} successorName={av.successor ? dsMap.get(av.successor)?.data.name : undefined} />
+
+  <div class="ds-layout">
+    <div>
+      {proseHtml ? (
+        <div class="prose" set:html={proseHtml} />
+      ) : (
+        <p class="callout">This record has no prose yet, only structured facts. <a href={`${SITE.repo}/new/main/datasets/${slug}?filename=page.md`} rel="noopener">Write a page.md</a> with an overview, the dataset's history and access tips.</p>
+      )}
+
+      <Section id="availability" title="Availability">
+        <dl class="kv">
+          <dt>Status</dt><dd><StatusBadge status={av.status} /> <span class="muted small">{status.description}</span></dd>
+          <dt>Access</dt><dd>{av.access_methods.map((m) => ACCESS_BY_ID[m]?.label ?? m).join(' · ')}{av.registration_url && <span> · <a href={av.registration_url} rel="noopener">registration ↗</a></span>}</dd>
+          <dt>Cost</dt><dd>{av.cost === 'free' ? 'Free' : av.cost === 'free-academic' ? 'Free for academic use' : 'Paid'}</dd>
+          {av.eligibility && <><dt>Eligibility</dt><dd>{av.eligibility}</dd></>}
+          {av.download_size && <><dt>Download size</dt><dd>{av.download_size.compressed_gb !== undefined && <b>{fmtNum(av.download_size.compressed_gb)} GB</b>}{av.download_size.uncompressed_gb !== undefined && <span> ({fmtNum(av.download_size.uncompressed_gb)} GB uncompressed)</span>}{av.download_size.note && <span class="muted"> {av.download_size.note}</span>}</dd></>}
+          {av.checksums_published !== undefined && <><dt>Checksums</dt><dd>{av.checksums_published ? 'Published' : 'Not published'}</dd></>}
+          {av.persistent_id && <><dt>Persistent ID</dt><dd>{av.persistent_id.doi && <span>DOI {av.persistent_id.doi} </span>}{av.persistent_id.zenodo && <span>Zenodo {av.persistent_id.zenodo} </span>}{av.persistent_id.other}</dd></>}
+          <dt>Verified</dt><dd>{fmtDate(av.last_verified)} by {av.verified_by === 'agent' ? 'an agent (not yet confirmed by a human)' : 'a human'}</dd>
+          {av.successor && <><dt>Successor</dt><dd><a href={url(`/datasets/${av.successor}/`)}>{dsMap.get(av.successor)?.data.name ?? av.successor}</a></dd></>}
+          {av.discontinuation_announcement && <><dt>Announcement</dt><dd><a href={av.discontinuation_announcement} rel="noopener">{av.discontinuation_announcement}</a></dd></>}
+        </dl>
+        <h3>Evidence</h3>
+        <ul class="evidence">
+          {av.evidence.map((ev) => (
+            <li>
+              <a class="url" href={ev.url} rel="noopener">{ev.url}</a>
+              <span class="muted"> · checked {fmtDate(ev.checked)}{ev.http_status ? ` · HTTP ${ev.http_status}` : ''}</span>
+              {ev.wayback && <span> · <a href={ev.wayback} rel="noopener">Wayback snapshot ↗</a></span>}
+              {ev.note && <div>{ev.note}</div>}
+            </li>
+          ))}
+        </ul>
+        {av.mirrors.length > 0 && (
+          <>
+            <h3>Mirrors and re-hosts</h3>
+            <div class="table-wrap"><table class="mirror-table">
+              <thead><tr><th>Host</th><th>Official</th><th>Subset</th><th>Licence</th><th>Verified</th><th>Note</th></tr></thead>
+              <tbody>{av.mirrors.map((m) => <tr><td><a href={m.url} rel="noopener">{m.host} ↗</a></td><td>{m.official ? <span class="yes">✓ official</span> : <span class="muted">unofficial</span>}</td><td>{m.subset ?? 'complete'}</td><td>{m.license ?? '–'}</td><td>{m.last_verified ? fmtDate(m.last_verified) : '–'}</td><td>{m.note ?? ''}</td></tr>)}</tbody>
+            </table></div>
+          </>
+        )}
+        {av.history.length > 0 && (
+          <>
+            <h3>History</h3>
+            <ol class="timeline">
+              {av.history.map((h) => <li class={h.status ? (STATUS_BY_ID[h.status]?.color ?? '') : ''}><span class="date">{fmtDate(h.date)}</span>{h.event}{h.status && <span> <StatusBadge status={h.status} short /></span>}{h.source && <a class="src" href={h.source} rel="noopener">source ↗</a>}</li>)}
+            </ol>
+          </>
+        )}
+        {av.notes && <p class="callout">{av.notes}</p>}
+      </Section>
+
+      <Section id="collection" title="Collection and scale">
+        <dl class="kv">
+          <dt>Reality</dt><dd><span class:list={['tag', d.collection.reality]}>{d.collection.reality}</span>{d.collection.simulator && <span> · {d.collection.simulator.name}{d.collection.simulator.version ? ` ${d.collection.simulator.version}` : ''}</span>}</dd>
+          {d.collection.platform && <><dt>Platform</dt><dd>{d.collection.platform}</dd></>}
+          {d.collection.vehicle && <><dt>Vehicle</dt><dd>{d.collection.vehicle}{d.collection.num_vehicles ? ` (${d.collection.num_vehicles} vehicle${d.collection.num_vehicles > 1 ? 's' : ''})` : ''}</dd></>}
+          {d.collection.driving_mode && <><dt>Driving mode</dt><dd>{d.collection.driving_mode}</dd></>}
+          {d.collection.period && <><dt>Recorded</dt><dd>{fmtDate(d.collection.period.start)}{d.collection.period.end && d.collection.period.end !== d.collection.period.start ? ` – ${fmtDate(d.collection.period.end)}` : ''}</dd></>}
+          <dt>Locations</dt>
+          <dd>
+            {d.collection.locations.length > 0 ? d.collection.locations.map((l, i) => <span>{flag(l.country)} {l.city ?? l.region ?? countryName(l.country)}{l.city && l.region ? `, ${l.region}` : ''}{i < d.collection.locations.length - 1 ? ' · ' : ''}</span>) : <span class="muted">{d.collection.reality === 'synthetic' ? 'Synthetic' : 'Not published'}</span>}
+            {d.collection.locations_note && <div class="muted small">{d.collection.locations_note}</div>}
+          </dd>
+          {d.collection.environment && <><dt>Environment</dt><dd>{d.collection.environment.join(', ')}</dd></>}
+          {d.collection.conditions && <><dt>Conditions</dt><dd>{d.collection.conditions.join(', ')}</dd></>}
+        </dl>
+        {scaleTiles.some(([, v]) => v !== undefined) && (
+          <div class="grid tiles" style="margin-top:1rem">
+            {scaleTiles.filter(([, v]) => v !== undefined).map(([label, v]) => <div class="tile"><div class="num">{v}</div><div class="lbl">{label}</div></div>)}
+          </div>
+        )}
+        {d.scale.notes && <p class="small muted" style="margin-top:0.6rem">{d.scale.notes}</p>}
+      </Section>
+
+      <Section id="sensors" title="Sensors">
+        {d.sensors.length > 0 ? (
+          <div class="two-col">
+            <div class="table-wrap"><table>
+              <thead><tr><th>Sensor</th><th>#</th><th>Rate</th><th>Details</th></tr></thead>
+              <tbody>{d.sensors.map((s) => (
+                <tr>
+                  <td><b>{SENSOR_BY_ID[s.type]?.label ?? s.type}</b>{s.name && <div class="small muted">{s.name}</div>}{s.model && <div class="small">{s.model}</div>}</td>
+                  <td class="cnt">{s.count ?? '?'}</td>
+                  <td class="nowrap">{s.hz ? `${fmtNum(s.hz)} Hz` : '–'}</td>
+                  <td>{sensorDetail(s)}{s.ids && <div class="small mono muted">{s.ids.join(' ')}</div>}{s.notes && <div class="small">{s.notes}</div>}</td>
+                </tr>
+              ))}</tbody>
+            </table></div>
+            <RigDiagram dataset={d} />
+          </div>
+        ) : (
+          <p class="muted">{d.collection.reality === 'synthetic' ? 'Sensors are configured per data-collection run.' : 'No sensor data is shipped with this dataset.'}</p>
+        )}
+        {timelineFig && figUrl(timelineFig.file) && (
+          <figure class="figure">
+            <img class="invertible" src={figUrl(timelineFig.file)} alt={`Sensor recording timeline of ${d.name}`} loading="lazy" />
+            <figcaption>{timelineFig.caption ?? 'Sensor recording timeline.'} Source: <a href={timelineFig.source} rel="noopener">py123d</a>{timelineFig.license ? ` (${timelineFig.license})` : ''}.</figcaption>
+          </figure>
+        )}
+      </Section>
+
+      <Section id="annotations" title="Annotations and maps">
+        <ModalityIcons modalities={d.modalities} size="lg" showAll />
+        {d.annotations.length > 0 ? (
+          <div class="table-wrap" style="margin-top:1rem"><table>
+            <thead><tr><th>Annotation</th><th>Classes</th><th>Rate</th><th>Method</th><th>Notes</th></tr></thead>
+            <tbody>{d.annotations.map((a) => <tr><td><b>{ANNOTATION_BY_ID[a.type]?.label ?? a.type}</b>{a.coverage && <div class="small muted">{a.coverage}</div>}</td><td>{a.classes ?? '–'}</td><td class="nowrap">{a.hz ? `${fmtNum(a.hz)} Hz` : '–'}</td><td>{a.method ?? '–'}</td><td class="small">{a.notes ?? ''}</td></tr>)}</tbody>
+          </table></div>
+        ) : (
+          <p class="muted" style="margin-top:1rem">No object annotations are recorded for this dataset.</p>
+        )}
+        <h3>Map</h3>
+        {d.maps.available ? (
+          <dl class="kv">
+            <dt>Type</dt><dd>{d.maps.type ?? '–'}{d.maps.dimensions ? ` · ${d.maps.dimensions.toUpperCase()}` : ''}{d.maps.scope ? ` · ${d.maps.scope.replace('_', ' ')}` : ''}</dd>
+            {d.maps.format && <><dt>Format</dt><dd>{d.maps.format}</dd></>}
+            {d.maps.georeferenced !== undefined && <><dt>Georeferenced</dt><dd>{d.maps.georeferenced ? 'Yes' : 'No'}</dd></>}
+            {d.maps.layers && <><dt>Layers</dt><dd>{d.maps.layers.join(', ')}</dd></>}
+            {d.maps.notes && <><dt>Notes</dt><dd>{d.maps.notes}</dd></>}
+          </dl>
+        ) : (
+          <p class="muted">No map data.{d.maps.notes ? ` ${d.maps.notes}` : ''}</p>
+        )}
+      </Section>
+
+      {(d.splits.length > 0 || d.benchmarks.length > 0) && (
+        <Section id="splits" title="Splits and benchmarks">
+          {d.splits.length > 0 && (
+            <div class="table-wrap"><table>
+              <thead><tr><th>Split</th><th>Size</th><th>Notes</th></tr></thead>
+              <tbody>{d.splits.map((s) => <tr><td><code>{s.name}</code></td><td class="nowrap">{s.count !== undefined ? `${fmtNum(s.count)} ${s.unit ?? ''}` : '–'}</td><td class="small">{s.hidden_ground_truth && <span class="tag">hidden ground truth</span>} {s.notes ?? ''}</td></tr>)}</tbody>
+            </table></div>
+          )}
+          {d.benchmarks.length > 0 && (
+            <div class="table-wrap" style="margin-top:1rem"><table>
+              <thead><tr><th>Task</th><th>Benchmark</th><th>Evaluation server</th></tr></thead>
+              <tbody>{d.benchmarks.map((b) => <tr><td>{TASK_BY_ID[b.task]?.label ?? b.task}</td><td>{b.url ? <a href={b.url} rel="noopener">{b.name ?? b.url} ↗</a> : (b.name ?? '–')}{b.notes && <div class="small muted">{b.notes}</div>}</td><td>{b.eval_server === 'open' ? <span class="yes">accepting submissions</span> : b.eval_server === 'closed' ? <span class="no">closed</span> : <span class="muted">unknown</span>}</td></tr>)}</tbody>
+            </table></div>
+          )}
+        </Section>
+      )}
+
+      <Section id="tooling" title="Formats and tooling">
+        <dl class="kv">
+          {d.formats.raw && <><dt>Raw formats</dt><dd>{d.formats.raw.join(' · ')}</dd></>}
+          {d.formats.devkit && <><dt>Devkit</dt><dd><a href={d.formats.devkit.url} rel="noopener">{d.formats.devkit.name} ↗</a>{d.formats.devkit.language ? ` · ${d.formats.devkit.language}` : ''}{d.formats.devkit.maintained === false ? ' · ' : ''}{d.formats.devkit.maintained === false && <span class="fg-amber">not actively maintained</span>}{d.formats.devkit.notes && <div class="small muted">{d.formats.devkit.notes}</div>}</dd></>}
+          {d.formats.loaders.length > 0 && <><dt>Loaders</dt><dd>{d.formats.loaders.map((l, i) => <span><a href={l.url} rel="noopener">{l.name}</a>{l.notes ? ` (${l.notes})` : ''}{i < d.formats.loaders.length - 1 ? ' · ' : ''}</span>)}</dd></>}
+          {d.formats.known_issues && <><dt>Known issues</dt><dd><ul style="margin:0;padding-left:1.1rem">{d.formats.known_issues.map((k) => <li>{k}</li>)}</ul></dd></>}
+        </dl>
+        {d.tooling.py123d && (
+          <div class="card" style="margin-top:1rem">
+            <div class="row" style="justify-content:space-between">
+              <h3 style="margin:0">py123d <span class="tag">{d.tooling.py123d.status}</span></h3>
+              <a class="btn sm" href={d.tooling.py123d.docs} rel="noopener"><Icon name="external" size={14} /> Dataset docs</a>
+            </div>
+            <p class="small" style="margin:0.6rem 0">Read this dataset through <a href={SITE.py123d} rel="noopener">py123d</a>'s unified Arrow format and API.{d.tooling.py123d.notes ? ` ${d.tooling.py123d.notes}` : ''}</p>
+            <pre><code>{d.tooling.py123d.extra ? `pip install "${d.tooling.py123d.extra}"` : 'pip install py123d'}{pyConfig ? `\npy123d-conversion dataset=${pyConfig}` : ''}</code></pre>
+            <div class="row small" style="gap:0.35rem"><span class="muted">Configs:</span>{d.tooling.py123d.configs.map((c) => <code>{c}</code>)}</div>
+          </div>
+        )}
+      </Section>
+
+      <Section id="legal" title="Legal">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Licence</th><th>Applies to</th><th></th></tr></thead>
+          <tbody>{d.legal.licenses.map((l) => <tr><td><b class="mono">{l.id}</b><div class="small muted">{l.name}</div></td><td>{l.applies_to.join(', ')}</td><td>{l.url && <a href={l.url} rel="noopener">text ↗</a>}</td></tr>)}</tbody>
+        </table></div>
+        <h3>Plain-language reading of the data licence</h3>
+        <ul class="checks">
+          {permList.map(([k, label]) => <li>{perm[k] === true ? <span class="yes"><Icon name="check" size={16} /></span> : perm[k] === false ? <span class="no"><Icon name="x" size={16} /></span> : <span class="maybe"><Icon name="info" size={16} /></span>} {label}{perm[k] === undefined ? <span class="muted"> (not assessed)</span> : ''}</li>)}
+        </ul>
+        <dl class="kv" style="margin-top:0.8rem">
+          {d.legal.terms_url && <><dt>Terms of use</dt><dd><a href={d.legal.terms_url} rel="noopener">{d.legal.terms_url}</a></dd></>}
+          {d.legal.privacy && <><dt>Privacy</dt><dd>{d.legal.privacy}</dd></>}
+          {d.legal.export_control && <><dt>Export control</dt><dd>{d.legal.export_control}</dd></>}
+          {d.legal.notes && <><dt>Notes</dt><dd>{d.legal.notes}</dd></>}
+        </dl>
+        <p class="small muted">This is a summary by contributors, not legal advice. Read the licence before using the data.</p>
+      </Section>
+
+      {(siblings.length > 0 || relatedInternal.length > 0 || d.relations.length > 0) && (
+        <Section id="related" title="Related datasets">
+          {d.relations.length > 0 && (
+            <ul class="list-plain small" style="margin-bottom:1rem">
+              {d.relations.map((r) => <li><span class="tag">{RELATION_BY_ID[r.type]?.label ?? r.type}</span> {r.external ? (r.url ? <a href={r.url} rel="noopener">{r.target} ↗</a> : r.target) : <a href={url(`/datasets/${r.target}/`)}>{dsMap.get(r.target)?.data.name ?? r.target}</a>}{r.note && <span class="muted"> – {r.note}</span>}</li>)}
+            </ul>
+          )}
+          {family && siblings.length > 0 && <h3>Same family: <a href={url(`/families/${family.id}/`)}>{family.data.name}</a></h3>}
+          <div class="grid cards">
+            {[...siblings, ...relatedInternal].map((e) => <DatasetCard entry={e} orgNames={e.data.organizations.map(orgName)} />)}
+          </div>
+          {family && family.data.not_yet_recorded.length > 0 && <p class="small muted" style="margin-top:0.8rem">Not recorded yet in this family: {family.data.not_yet_recorded.join(', ')}.</p>}
+        </Section>
+      )}
+
+      <Section id="references" title="References">
+        {d.papers.length > 0 ? (
+          <ol style="padding-left:1.2rem">
+            {d.papers.map((p) => (
+              <li style="margin-bottom:0.6rem">
+                <b>{p.title}</b>{p.venue && <span>, {p.venue}</span>} ({p.year}).
+                {p.arxiv && <span> <a href={`https://arxiv.org/abs/${p.arxiv}`} rel="noopener">arXiv:{p.arxiv}</a></span>}
+                {p.doi && <span> · <a href={`https://doi.org/${p.doi}`} rel="noopener">DOI</a></span>}
+                {p.url && !p.arxiv && <span> · <a href={p.url} rel="noopener">link ↗</a></span>}
+                {p.required_citation && <span class="tag" title="The terms of use ask you to cite this paper">cite when used</span>}
+                {p.bibtex && <details class="bibtex"><summary>BibTeX</summary><pre><code>{p.bibtex.trim()}</code></pre></details>}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p class="muted">No paper is recorded. Cite the dataset page: <a href={d.homepage} rel="noopener">{d.homepage}</a>.</p>
+        )}
+        <dl class="kv">
+          <dt>Homepage</dt><dd><a href={d.homepage} rel="noopener">{d.homepage}</a></dd>
+          {d.links.download && <><dt>Download</dt><dd>{d.links.download.map((u) => <div><a href={u} rel="noopener">{u}</a></div>)}</dd></>}
+          {d.links.code && <><dt>Code</dt><dd>{d.links.code.map((u) => <div><a href={u} rel="noopener">{u}</a></div>)}</dd></>}
+          {d.links.docs && <><dt>Docs</dt><dd><a href={d.links.docs} rel="noopener">{d.links.docs}</a></dd></>}
+          {d.links.challenge && <><dt>Challenge</dt><dd><a href={d.links.challenge} rel="noopener">{d.links.challenge}</a></dd></>}
+          {d.links.leaderboard && <><dt>Leaderboard</dt><dd><a href={d.links.leaderboard} rel="noopener">{d.links.leaderboard}</a></dd></>}
+          {d.community.huggingface && <><dt>Hugging Face</dt><dd><a href={`https://huggingface.co/datasets/${d.community.huggingface}`} rel="noopener">{d.community.huggingface}</a></dd></>}
+        </dl>
+      </Section>
+
+      <Section id="record" title="About this record">
+        <dl class="kv">
+          <dt>Created</dt><dd>{fmtDate(d.curation.created)}</dd>
+          <dt>Updated</dt><dd>{fmtDate(d.curation.updated)}</dd>
+          <dt>Contributors</dt><dd>{d.curation.contributors.join(', ')}</dd>
+          {d.curation.confidence && <><dt>Confidence</dt><dd><span class:list={['tag', { 'fg-green': d.curation.confidence === 'high', 'fg-amber': d.curation.confidence === 'medium', 'fg-red': d.curation.confidence === 'low' }]}>{d.curation.confidence}</span></dd></>}
+          <dt>Schema</dt><dd>v{d.curation.schema_version}</dd>
+          {Object.keys(d.sources).length > 0 && <><dt>Sources</dt><dd><ul class="list-plain small" style="margin:0">{Object.entries(d.sources).map(([k, v]) => <li style="padding:0.15rem 0;border:0"><code>{k}</code> ← <a href={v} rel="noopener">{v.replace(/^https?:\/\//, '')}</a></li>)}</ul></dd></>}
+        </dl>
+        {d.curation.notes && <p class="callout warn"><b>Review notes:</b> {d.curation.notes}</p>}
+        <div class="row" style="margin-top:1rem; gap:0.5rem">
+          <a class="btn sm" href={editUrl} rel="noopener"><Icon name="edit" size={14} /> Edit on GitHub</a>
+          <a class="btn sm" href={viewUrl} rel="noopener"><Icon name="code" size={14} /> View YAML</a>
+          <a class="btn sm" href={historyUrl} rel="noopener"><Icon name="history" size={14} /> Page history</a>
+          <a class="btn sm" href={url(`/datasets/${slug}.json`)}><Icon name="database" size={14} /> JSON</a>
+        </div>
+      </Section>
+    </div>
+
+    <aside data-pagefind-ignore>
+      <div class="infobox">
+        <div class="head"><span>Quick facts</span><StatusBadge status={av.status} short /></div>
+        <dl>
+          <dt>Organization</dt><dd>{d.organizations.map((o, i) => <span><a href={url(`/organizations/${o}/`)}>{orgName(o)}</a>{i < d.organizations.length - 1 ? ', ' : ''}</span>)}</dd>
+          {family && <><dt>Family</dt><dd><a href={url(`/families/${family.id}/`)}>{family.data.name}</a></dd></>}
+          <dt>Released</dt><dd>{fmtDate(d.release_date)}</dd>
+          {d.version && <><dt>Version</dt><dd>{d.version}</dd></>}
+          <dt>Type</dt><dd><span class:list={['tag', d.collection.reality]}>{d.collection.reality}</span></dd>
+          <dt>Licence</dt><dd><span class="mono">{lic?.id}</span> {perm.commercial === true ? <span class="yes" title="Commercial use allowed">· commercial ✓</span> : perm.commercial === false ? <span class="no" title="Non-commercial only">· non-commercial</span> : ''}</dd>
+          <dt>Access</dt><dd>{av.access_methods.map((m) => ACCESS_BY_ID[m]?.label ?? m).join(', ')}</dd>
+          {cc.length > 0 && <><dt>Countries</dt><dd><span class="flags">{cc.map(flag).join(' ')}</span> <span class="small muted">{cc.map(countryName).join(', ')}</span></dd></>}
+          <dt>Modalities</dt><dd><ModalityIcons modalities={d.modalities} showAll /></dd>
+          <dt>Verified</dt><dd>{fmtDate(av.last_verified)} <span class="muted">({av.verified_by})</span></dd>
+        </dl>
+        <div class="numbers">
+          <div><b>{d.scale.hours !== undefined ? fmtNum(d.scale.hours) : '–'}</b><span>hours</span></div>
+          <div><b>{d.scale.km !== undefined ? fmtNum(d.scale.km) : '–'}</b><span>km</span></div>
+          <div><b>{d.scale.logs !== undefined ? fmtNum(d.scale.logs) : '–'}</b><span>{d.scale.log_unit}</span></div>
+        </div>
+        <div class="actions">
+          {downloadable && downloadUrl ? <a class="btn primary" href={downloadUrl} rel="noopener"><Icon name="download" size={16} /> Download{av.mirrors.length > 0 && !d.links.download?.length ? ' (mirror)' : ''}</a> : <span class="btn primary" aria-disabled="true"><Icon name="x" size={16} /> Not downloadable</span>}
+          <a class="btn" href={d.homepage} rel="noopener"><Icon name="globe" size={16} /> Homepage</a>
+          {paper && <a class="btn" href={paper.url ?? (paper.arxiv ? `https://arxiv.org/abs/${paper.arxiv}` : d.homepage)} rel="noopener"><Icon name="paper" size={16} /> Paper</a>}
+          {codeUrl && <a class="btn" href={codeUrl} rel="noopener"><Icon name="code" size={16} /> Code</a>}
+          {d.tooling.py123d && <a class="btn" href={d.tooling.py123d.docs} rel="noopener"><Icon name="external" size={16} /> py123d docs</a>}
+        </div>
+      </div>
+    </aside>
+  </div>
+</Base>

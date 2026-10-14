@@ -1,0 +1,22 @@
+- id: camera
+  label: Camera
+- id: lidar
+  label: LiDAR
+- id: radar
+  label: Radar
+- id: imu
+  label: IMU
+- id: gnss
+  label: GNSS
+- id: wheel_odometry
+  label: Wheel odometry
+- id: can
+  label: CAN bus
+- id: ultrasonic
+  label: Ultrasonic
+- id: thermal
+  label: Thermal camera
+- id: event
+  label: Event camera
+- id: microphone
+  label: Microphone

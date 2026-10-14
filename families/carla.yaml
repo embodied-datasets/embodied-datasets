@@ -1,0 +1,8 @@
+name: CARLA ecosystem
+tagline: The open-source CARLA simulator and datasets generated with it.
+organizations: [cvc-uab, intel-labs]
+homepage: https://carla.org/
+description: |
+  CARLA itself is a simulator, not a dataset, but it is the origin of a growing set of synthetic driving datasets.
+  This family groups the simulator with the CARLA-generated datasets that have records here.
+not_yet_recorded: [Bench2Drive, CARLA Leaderboard 2.0 expert datasets (PDM-Lite, TransFuser++)]

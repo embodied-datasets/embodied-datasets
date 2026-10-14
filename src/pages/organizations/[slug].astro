@@ -1,0 +1,40 @@
+---
+import Base from '../../layouts/Base.astro';
+import DatasetCard from '../../components/DatasetCard.astro';
+import { getDatasets, getFamilies, getOrganizations } from '../../lib/data.ts';
+import type { OrgEntry } from '../../lib/data.ts';
+import { url, flag, countryName } from '../../lib/site.ts';
+export async function getStaticPaths() {
+  const orgs = await getOrganizations();
+  return orgs.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+interface Props { entry: OrgEntry }
+const { entry } = Astro.props;
+const o = entry.data;
+const [datasets, families, orgs] = await Promise.all([getDatasets(), getFamilies(), getOrganizations()]);
+const orgName = (id: string) => orgs.find((x) => x.id === id)?.data.name ?? id;
+const ds = datasets.filter((d) => d.data.organizations.includes(entry.id));
+const fs = families.filter((f) => f.data.organizations.includes(entry.id));
+---
+<Base title={o.name} description={o.description ?? `${o.name} and its datasets`}>
+  <nav class="breadcrumb" data-pagefind-ignore><a href={url('/')}>Home</a> › <a href={url('/organizations/')}>Organizations</a> › <span>{o.name}</span></nav>
+  <div class="page-head" style="padding-top:0">
+    <div class="eyebrow">{o.type.replace('_', ' ')}{o.country ? ` · ${flag(o.country)} ${countryName(o.country)}` : ''}</div>
+    <h1>{o.name}</h1>
+    {o.aliases.length > 0 && <div class="muted small">Also known as {o.aliases.join(', ')}</div>}
+    {o.description && <p class="lead">{o.description}</p>}
+    {o.url && <p class="small"><a href={o.url} rel="noopener">{o.url.replace(/^https?:\/\//, '')} ↗</a></p>}
+  </div>
+  {o.defunct && <p class="callout warn"><b>This organization no longer exists.</b> Its datasets depend on whoever keeps the hosting running; check their availability status and mirrors.</p>}
+  {o.notes && <p class="callout">{o.notes}</p>}
+  <section class="section">
+    <h2>Datasets ({ds.length})</h2>
+    <div class="grid cards">{ds.map((e) => <DatasetCard entry={e} orgNames={e.data.organizations.map(orgName)} />)}</div>
+  </section>
+  {fs.length > 0 && (
+    <section class="section">
+      <h2>Families</h2>
+      <div class="row">{fs.map((f) => <a class="tag" href={url(`/families/${f.id}/`)}>{f.data.name}</a>)}</div>
+    </section>
+  )}
+</Base>

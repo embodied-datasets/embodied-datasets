@@ -1,0 +1,33 @@
+---
+import type { Dataset } from '../lib/data.ts';
+import { statusOf } from '../lib/data.ts';
+import { url, fmtDate } from '../lib/site.ts';
+import Icon from './Icon.astro';
+interface Props { dataset: Dataset; successorName?: string }
+const { dataset: d, successorName } = Astro.props;
+const info = statusOf(d);
+const color = info.color ?? 'gray';
+const av = d.availability;
+const ICON: Record<string, string> = { green: 'unlock', blue: 'lock', amber: 'lock', orange: 'alert', vermilion: 'mirror', red: 'x', purple: 'history', gray: 'info' };
+const evidence = av.evidence[0];
+---
+<div class:list={['banner', color]} role="status">
+  <Icon name={ICON[color] ?? 'info'} class="ic" size={28} />
+  <div>
+    <div class="st">{info.label}</div>
+    <div class="meta">
+      {info.description}{' '}
+      Last verified <b>{fmtDate(av.last_verified)}</b> by {av.verified_by === 'agent' ? 'an agent' : 'a human'}.
+      {av.cost === 'paid' && ' Paid access.'}
+      {av.eligibility && <span> {av.eligibility}</span>}
+    </div>
+    <div class="links">
+      {evidence && <a href={evidence.url} rel="noopener">Evidence ↗</a>}
+      {evidence?.wayback && <a href={evidence.wayback} rel="noopener">Wayback snapshot ↗</a>}
+      {av.registration_url && <a href={av.registration_url} rel="noopener">Registration ↗</a>}
+      {av.discontinuation_announcement && <a href={av.discontinuation_announcement} rel="noopener">Discontinuation notice ↗</a>}
+      {av.successor && <a href={url(`/datasets/${av.successor}/`)}>Successor: {successorName ?? av.successor} →</a>}
+      {av.mirrors.length > 0 && <a href="#availability">{av.mirrors.length} mirror{av.mirrors.length > 1 ? 's' : ''} listed ↓</a>}
+    </div>
+  </div>
+</div>

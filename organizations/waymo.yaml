@@ -1,0 +1,5 @@
+name: Waymo
+type: company
+country: US
+url: https://waymo.com/
+description: Alphabet's autonomous-driving company. Publishes the Waymo Open Dataset family (Perception, Motion and derived challenges).

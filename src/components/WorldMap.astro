@@ -1,0 +1,63 @@
+---
+/** Build-time world map (Natural Earth projection) with one dot per recording city. */
+import { geoNaturalEarth1, geoPath } from 'd3-geo';
+import { feature } from 'topojson-client';
+import land110 from 'world-atlas/land-110m.json';
+import type { DatasetEntry } from '../lib/data.ts';
+import { url, countryName } from '../lib/site.ts';
+interface Props { datasets: DatasetEntry[] }
+const { datasets } = Astro.props;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const topo = land110 as any;
+const land = feature(topo, topo.objects.land) as unknown as GeoJSON.FeatureCollection | GeoJSON.Feature;
+const W = 960, H = 470;
+const projection = geoNaturalEarth1().fitExtent([[8, 8], [W - 8, H - 8]], land as GeoJSON.Feature);
+const path = geoPath(projection);
+const landPath = path(land as GeoJSON.Feature) ?? '';
+type Spot = { key: string; city: string; country: string; lat: number; lon: number; datasets: DatasetEntry[] };
+const spots = new Map<string, Spot>();
+for (const entry of datasets) {
+  for (const loc of entry.data.collection.locations) {
+    if (loc.lat === undefined || loc.lon === undefined) continue;
+    const key = `${loc.lat.toFixed(1)},${loc.lon.toFixed(1)}`;
+    const s = spots.get(key) ?? { key, city: loc.city ?? loc.region ?? loc.country, country: loc.country, lat: loc.lat, lon: loc.lon, datasets: [] };
+    if (!s.datasets.includes(entry)) s.datasets.push(entry);
+    spots.set(key, s);
+  }
+}
+const list = [...spots.values()].sort((a, b) => b.datasets.length - a.datasets.length || a.city.localeCompare(b.city));
+const unlocated = datasets.filter((d) => d.data.collection.reality === 'real' && d.data.collection.locations.length === 0);
+---
+<div class="map-wrap">
+  <svg class="svg-map" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="World map of recording locations">
+    <path d={landPath} fill="var(--bg-muted)" stroke="var(--border-strong)" stroke-width="0.5" />
+    {list.map((s) => {
+      const p = projection([s.lon, s.lat]);
+      if (!p) return null;
+      const r = 4 + Math.min(s.datasets.length, 5) * 1.6;
+      return (
+        <a href={`#loc-${s.key.replace(/[^a-z0-9]/gi, '')}`}>
+          <circle cx={p[0]} cy={p[1]} r={r + 4} fill="var(--accent-2)" fill-opacity="0.18" />
+          <circle cx={p[0]} cy={p[1]} r={r} fill="var(--accent)" stroke="var(--bg-elev)" stroke-width="1.5">
+            <title>{s.city}, {countryName(s.country)} · {s.datasets.map((d) => d.data.name).join(', ')}</title>
+          </circle>
+        </a>
+      );
+    })}
+  </svg>
+</div>
+<div class="grid cards" style="margin-top:1rem">
+  {list.map((s) => (
+    <div class="card" id={`loc-${s.key.replace(/[^a-z0-9]/gi, '')}`}>
+      <div style="font-weight:600">{s.city} <span class="muted small">· {countryName(s.country)}</span></div>
+      <ul class="list-plain small" style="margin-top:0.4rem">
+        {s.datasets.map((d) => <li><a href={url(`/datasets/${d.id}/`)}>{d.data.name}</a></li>)}
+      </ul>
+    </div>
+  ))}
+</div>
+{unlocated.length > 0 && (
+  <p class="small muted" style="margin-top:1rem">
+    Real-world datasets without published cities: {unlocated.map((d, i) => <span><a href={url(`/datasets/${d.id}/`)}>{d.data.name}</a>{i < unlocated.length - 1 ? ', ' : ''}</span>)}.
+  </p>
+)}

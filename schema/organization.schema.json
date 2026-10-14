@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/DanielDauner/embodied-datasets/blob/main/schema/organization.schema.json",
+  "title": "Embodied Datasets – organization record",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "aliases": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "company",
+        "university",
+        "research_institute",
+        "lab",
+        "government",
+        "community",
+        "individual"
+      ]
+    },
+    "country": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$",
+      "description": "ISO 3166-1 alpha-2 country code."
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Absolute http(s) URL."
+    },
+    "description": {
+      "type": "string"
+    },
+    "defunct": {
+      "default": false,
+      "description": "True if the organization no longer exists; matters for availability risk.",
+      "type": "boolean"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "type"
+  ],
+  "additionalProperties": false,
+  "description": "An organization that created, hosts or maintains datasets."
+}

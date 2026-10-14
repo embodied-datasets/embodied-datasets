@@ -1,0 +1,86 @@
+---
+import Base from '../../layouts/Base.astro';
+import StatusBadge from '../../components/StatusBadge.astro';
+import StatTile from '../../components/StatTile.astro';
+import { getDatasets, getOrganizations, isDownloadable } from '../../lib/data.ts';
+import { STATUS } from '../../schema/vocab.ts';
+import { url, fmtDate } from '../../lib/site.ts';
+const [datasets, orgs] = await Promise.all([getDatasets(), getOrganizations()]);
+const orgName = (id: string) => orgs.find((o) => o.id === id)?.data.name ?? id;
+const severity = ['discontinued', 'superseded', 'deprecated-but-downloadable', 'partially-available', 'unverified', 'available-application', 'available-registration', 'available'];
+const groups = severity.map((id) => ({ s: STATUS.find((x) => x.id === id)!, items: datasets.filter((d) => d.data.availability.status === id) })).filter((g) => g.items.length > 0);
+const queue = [...datasets].sort((a, b) => a.data.availability.last_verified.localeCompare(b.data.availability.last_verified));
+const downloadable = datasets.filter((d) => isDownloadable(d.data)).length;
+const agentOnly = datasets.filter((d) => d.data.availability.verified_by === 'agent').length;
+const withMirrors = datasets.filter((d) => d.data.availability.mirrors.length > 0).length;
+const defunctOrgs = orgs.filter((o) => o.data.defunct);
+const atRisk = datasets.filter((d) => d.data.organizations.some((o) => defunctOrgs.some((x) => x.id === o)) || d.data.formats.devkit?.maintained === false);
+---
+<Base title="Availability report" description="Which autonomous driving datasets are still downloadable, which need registration, and which have lost their official source.">
+  <div class="page-head">
+    <h1>Availability report</h1>
+    <p class="lead">
+      The reason this wiki exists. Every dataset carries a status from a fixed vocabulary, a verification date, the
+      person or agent that verified it, and the evidence. Statuses are ordered from worst to best below.
+    </p>
+  </div>
+  <div class="grid tiles">
+    <StatTile value={`${downloadable} / ${datasets.length}`} label="downloadable in some form" />
+    <StatTile value={withMirrors} label="with mirrors listed" />
+    <StatTile value={atRisk.length} label="at risk" sub="defunct creator or unmaintained devkit" />
+    <StatTile value={agentOnly} label="verified by an agent only" sub="awaiting human confirmation" />
+  </div>
+
+  <section class="section">
+    <h2>Status vocabulary</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Status</th><th>Meaning</th><th>Downloadable</th><th>Count</th></tr></thead>
+      <tbody>{STATUS.map((s) => <tr><td><StatusBadge status={s.id} /></td><td class="small">{s.description}</td><td>{s.downloadable === false ? <span class="no">no</span> : <span class="yes">yes</span>}</td><td>{datasets.filter((d) => d.data.availability.status === s.id).length}</td></tr>)}</tbody>
+    </table></div>
+  </section>
+
+  {groups.map((g) => (
+    <section class="section">
+      <h2><StatusBadge status={g.s.id} size="lg" /> <span class="muted small" style="font-weight:400">{g.items.length}</span></h2>
+      <p class="small muted" style="margin-top:0.5rem">{g.s.description}</p>
+      <ul class="list-plain">
+        {g.items.map((d) => {
+          const av = d.data.availability;
+          const ev = av.evidence[0];
+          return (
+            <li>
+              <div class="row" style="justify-content:space-between">
+                <span><a href={url(`/datasets/${d.id}/`)}><b>{d.data.name}</b></a> <span class="muted small">· {d.data.organizations.map(orgName).join(', ')}</span></span>
+                <span class="small muted">verified {fmtDate(av.last_verified)} ({av.verified_by})</span>
+              </div>
+              {ev?.note && <div class="small" style="margin-top:0.2rem">{ev.note}</div>}
+              <div class="small" style="margin-top:0.2rem">
+                {ev && <a href={ev.url} rel="noopener">evidence ↗</a>}
+                {ev?.wayback && <span> · <a href={ev.wayback} rel="noopener">Wayback ↗</a></span>}
+                {av.mirrors.length > 0 && <span> · mirrors: {av.mirrors.map((m, i) => <span><a href={m.url} rel="noopener">{m.host}{m.official ? '' : ' (unofficial)'}</a>{i < av.mirrors.length - 1 ? ', ' : ''}</span>)}</span>}
+                {av.successor && <span> · successor: <a href={url(`/datasets/${av.successor}/`)}>{av.successor}</a></span>}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  ))}
+
+  <section class="section">
+    <h2>At risk</h2>
+    <p class="small muted">Datasets whose creator no longer exists or whose devkit is unmaintained. They are available today, but nobody is contractually keeping them that way.</p>
+    <ul class="list-plain">
+      {atRisk.map((d) => <li><a href={url(`/datasets/${d.id}/`)}><b>{d.data.name}</b></a> <span class="muted small">· {d.data.organizations.map((o) => `${orgName(o)}${defunctOrgs.some((x) => x.id === o) ? ' (defunct)' : ''}`).join(', ')}{d.data.formats.devkit?.maintained === false ? ' · devkit unmaintained' : ''}</span> <StatusBadge status={d.data.availability.status} short /></li>)}
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>Re-verification queue</h2>
+    <p class="small muted">Oldest verification first. A scheduled link checker is planned; until then this is the to-do list for humans and agents.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Dataset</th><th>Status</th><th>Last verified</th><th>By</th><th>Evidence</th></tr></thead>
+      <tbody>{queue.map((d) => <tr><td><a href={url(`/datasets/${d.id}/`)}>{d.data.name}</a></td><td><StatusBadge status={d.data.availability.status} short /></td><td class="nowrap">{fmtDate(d.data.availability.last_verified)}</td><td>{d.data.availability.verified_by}</td><td>{d.data.availability.evidence.length} item{d.data.availability.evidence.length !== 1 ? 's' : ''}</td></tr>)}</tbody>
+    </table></div>
+  </section>
+</Base>

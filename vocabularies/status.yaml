@@ -1,0 +1,51 @@
+# Availability status of a dataset or release. The key block of every record.
+# Keys are stable identifiers used in dataset.yaml; labels and colours are used by the site.
+# `downloadable` says whether the data can still be obtained in some form today.
+- id: available
+  label: Available
+  short: Open
+  color: green
+  downloadable: true
+  description: Publicly downloadable without an account (direct link, open cloud bucket, torrent, open Hugging Face repository).
+- id: available-registration
+  label: Registration required
+  short: Registration
+  color: blue
+  downloadable: true
+  description: Free, but you must create an account and/or accept terms before downloading (login walls, gated Hugging Face repositories with automatic approval).
+- id: available-application
+  label: Application required
+  short: Application
+  color: amber
+  downloadable: true
+  description: Access is granted manually after an application, e.g. academic-only programmes or signed agreements.
+- id: partially-available
+  label: Partially available
+  short: Partial
+  color: orange
+  downloadable: true
+  description: Some subsets, modalities or releases have been withdrawn while others remain downloadable.
+- id: deprecated-but-downloadable
+  label: Official source gone, mirrors exist
+  short: Mirror only
+  color: vermilion
+  downloadable: true
+  description: The official download has disappeared or is no longer maintained, but the data can still be obtained from re-hosts or mirrors listed in the record.
+- id: discontinued
+  label: Discontinued
+  short: Discontinued
+  color: red
+  downloadable: false
+  description: No longer obtainable from any known source.
+- id: superseded
+  label: Superseded
+  short: Superseded
+  color: purple
+  downloadable: false
+  description: Withdrawn in favour of a successor dataset; see the successor pointer.
+- id: unverified
+  label: Unverified
+  short: Unverified
+  color: gray
+  downloadable: true
+  description: Status has not been checked by a human or an agent yet. Treat every other field with caution.

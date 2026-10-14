@@ -1,0 +1,8 @@
+---
+interface Props { id: string; title: string }
+const { id, title } = Astro.props;
+---
+<section class="section" id={id}>
+  <h2>{title} <a class="anchor" href={`#${id}`} aria-label={`Link to ${title}`}>#</a></h2>
+  <slot />
+</section>

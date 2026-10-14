@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/DanielDauner/embodied-datasets/blob/main/schema/family.schema.json",
+  "title": "Embodied Datasets – dataset family record",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "aliases": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tagline": {
+      "type": "string",
+      "maxLength": 220
+    },
+    "organizations": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+        "description": "Record identifier: lowercase letters, digits and hyphens."
+      }
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "description": "Absolute http(s) URL."
+    },
+    "description": {
+      "description": "A paragraph of Markdown.",
+      "type": "string"
+    },
+    "not_yet_recorded": {
+      "default": [],
+      "description": "Members of the family that have no record yet, so visitors know the gap is known.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "name",
+    "tagline"
+  ],
+  "additionalProperties": false,
+  "description": "A group of related datasets, e.g. Argoverse 2 with its Sensor, Lidar and Motion Forecasting releases. Membership is declared on the dataset records."
+}

@@ -1,0 +1,68 @@
+---
+import Base from '../../layouts/Base.astro';
+import StatusBadge from '../../components/StatusBadge.astro';
+import { STATUS } from '../../schema/vocab.ts';
+import { SITE, url } from '../../lib/site.ts';
+---
+<Base title="About" description="Why Embodied Datasets exists, how records are structured and what came before it.">
+  <div class="page-head">
+    <h1>About</h1>
+    <p class="lead">{SITE.tagline}</p>
+  </div>
+  <div class="prose">
+    <h2>Why</h2>
+    <p>
+      Autonomous-driving datasets are cited for years after their download links die. Lyft Level 5 is gone, PandaSet's
+      official page vanished, Argo AI shut down while its data lived on, and gated releases quietly change their terms.
+      Survey papers and awesome-lists capture a snapshot and then rot; none of them record <em>whether you can still get
+      the data</em>, when that was last checked, or where a mirror lives.
+    </p>
+    <p>
+      {SITE.name} treats availability as a first-class, dated, evidence-backed field. Each dataset is one YAML record in a
+      public repository, validated by a strict schema in CI and rendered into this site. Edits go through pull requests;
+      agents may draft records and run link checks, but a status change to "discontinued" and every licence
+      interpretation is confirmed by a human.
+    </p>
+
+    <h2>What a record contains</h2>
+    <ul>
+      <li><strong>Identity and provenance</strong>: name, aliases, family, version, release date, organizations, papers (with BibTeX), code and docs links.</li>
+      <li><strong>Availability</strong>: status, verification date and verifier, access method, cost and eligibility, evidence URLs with Wayback snapshots, mirrors, download size and a dated history of changes.</li>
+      <li><strong>Legal</strong>: licences per component (data, annotations, maps, code), terms of use, a plain-language permission summary and privacy notes.</li>
+      <li><strong>Collection and scale</strong>: real or synthetic, platform, cities with coordinates, hours, kilometres, logs and frames.</li>
+      <li><strong>Sensors, annotations, maps, splits, benchmarks, formats and tooling</strong>: one entry per sensor with py123d IDs (which draw the rig diagrams), annotation types from a controlled vocabulary, map type and layers, split sizes, evaluation-server status, raw formats, devkit health and loaders.</li>
+      <li><strong>Curation</strong>: who wrote and updated the record, a confidence level and a <code>sources</code> map from field to URL.</li>
+    </ul>
+    <p>The schema is published as <a href={`${SITE.repo}/blob/main/schema/dataset.schema.json`} rel="noopener">JSON Schema</a>; the whole database is exported as <a href={url('/export/datasets.json')}>JSON</a> and <a href={url('/export/datasets.csv')}>CSV</a> on every build.</p>
+
+    <h2>Availability statuses</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+      <tbody>{STATUS.map((s) => <tr><td><StatusBadge status={s.id} /></td><td class="small">{s.description}</td></tr>)}</tbody>
+    </table></div>
+    <p style="margin-top:1rem">Rules of evidence: a status needs at least one dated observation of a concrete URL (the download page, a hosting API such as Hugging Face's, or an archived snapshot). Login walls and rate limits cause false positives, so an automated check never flips a dataset to <em>discontinued</em> on its own.</p>
+
+    <h2>Scope</h2>
+    <p>
+      The first release covers the datasets supported by <a href={SITE.py123d} rel="noopener">py123d</a>, the library that
+      converts driving datasets into one Arrow format. That gives every record a working loader and measured scale
+      figures. The schema already carries a <code>domain</code> field so that robotics datasets beyond driving can join later.
+    </p>
+
+    <h2>Prior art</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Effort</th><th>What it is</th><th>Gap</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://ad-datasets.com" rel="noopener">ad-datasets</a> (Bogdoll et al.)</td><td class="small">JSON record per dataset, React site with filters, citation counts, 150+ datasets</td><td class="small">Unmaintained since 2023; no availability status; single data.json invites merge conflicts</td></tr>
+        <tr><td><a href="https://arxiv.org/abs/2401.01454" rel="noopener">TUM survey</a> (Liu et al. 2024)</td><td class="small">265 datasets by modality, size, tasks, conditions</td><td class="small">Tables as PDF; no structured data or site</td></tr>
+        <tr><td><a href="https://arxiv.org/abs/2312.03408" rel="noopener">OpenDriveLab data survey</a></td><td class="small">Markdown tables with sensors, scale, annotations</td><td class="small">Newest entries 2023; markdown only</td></tr>
+        <tr><td>Awesome lists, AWS Open Data, Hugging Face tags</td><td class="small">Link lists and hosting catalogues</td><td class="small">Unstructured, or limited to what they host</td></tr>
+      </tbody>
+    </table></div>
+    <p style="margin-top:1rem">Nobody tracked availability, verification dates or mirrors, and every structured effort died with its single maintainer. Hence: a low-friction PR workflow, agents for the boring parts, and a schema that is small enough to be filled.</p>
+
+    <h2>Licences and credits</h2>
+    <p>Records are published under <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a>, the site code under MIT. Sensor timeline figures come from the <a href={SITE.py123d} rel="noopener">py123d documentation</a> (Apache 2.0). Country shapes are Natural Earth via world-atlas. Fonts: Inter and JetBrains Mono.</p>
+    <p>Maintained by Daniel Dauner and contributors. <a href={SITE.repo} rel="noopener">Source on GitHub</a>.</p>
+  </div>
+</Base>

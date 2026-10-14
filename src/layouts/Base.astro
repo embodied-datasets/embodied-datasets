@@ -1,0 +1,166 @@
+---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/global.css';
+import { SITE, url } from '../lib/site.ts';
+import Icon from '../components/Icon.astro';
+import Logo from '../components/Logo.astro';
+interface Props { title: string; description?: string; ogType?: string }
+const { title, description = SITE.description } = Astro.props;
+const fullTitle = title === SITE.name ? `${SITE.name} – driving dataset wiki` : `${title} · ${SITE.name}`;
+const path = Astro.url.pathname;
+const nav = [
+  { href: '/datasets/', label: 'Datasets' },
+  { href: '/status/', label: 'Availability' },
+  { href: '/families/', label: 'Families' },
+  { href: '/organizations/', label: 'Organizations' },
+  { href: '/timeline/', label: 'Timeline' },
+  { href: '/map/', label: 'Map' },
+  { href: '/about/', label: 'About' },
+];
+const isCurrent = (href: string) => path.startsWith(url(href));
+const canonical = new URL(path, Astro.site ?? 'https://danieldauner.github.io').toString();
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href={url('/favicon.svg')} type="image/svg+xml" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta name="theme-color" content="#faf9f6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121316" media="(prefers-color-scheme: dark)" />
+    <script is:inline>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="site-header" data-pagefind-ignore>
+      <div class="container">
+        <a class="brand" href={url('/')}><Logo /> <span>{SITE.name}</span></a>
+        <nav class="nav" aria-label="Main">
+          {nav.map((n) => <a href={url(n.href)} aria-current={isCurrent(n.href) ? 'page' : undefined}>{n.label}</a>)}
+        </nav>
+        <div class="header-actions">
+          <button class="icon-btn" id="open-search" type="button" aria-label="Search"><Icon name="search" size={16} /><span class="lbl">Search</span><kbd>/</kbd></button>
+          <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle dark mode"><span class="only-light"><Icon name="moon" size={16} /></span><span class="only-dark"><Icon name="sun" size={16} /></span></button>
+          <a class="icon-btn" href={SITE.repo} rel="noopener" aria-label="GitHub repository"><Icon name="github" size={16} /></a>
+        </div>
+      </div>
+    </header>
+
+    <main class="container" data-pagefind-body>
+      <slot />
+    </main>
+
+    <footer class="site-footer" data-pagefind-ignore>
+      <div class="container cols">
+        <div>
+          <h4>{SITE.name}</h4>
+          <p>{SITE.tagline}</p>
+          <p>Records are <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a>, code is MIT. Facts are only as good as their sources: every record links its evidence and names who verified it last.</p>
+        </div>
+        <div>
+          <h4>Browse</h4>
+          <ul>
+            <li><a href={url('/datasets/')}>All datasets</a></li>
+            <li><a href={url('/status/')}>Availability report</a></li>
+            <li><a href={url('/timeline/')}>Release timeline</a></li>
+            <li><a href={url('/map/')}>Recording map</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contribute</h4>
+          <ul>
+            <li><a href={url('/contribute/')}>How to add or fix a record</a></li>
+            <li><a href={`${SITE.repo}/issues/new?template=add-dataset.yml`} rel="noopener">Request a dataset</a></li>
+            <li><a href={`${SITE.repo}/blob/main/schema/dataset.schema.json`} rel="noopener">Record schema (JSON Schema)</a></li>
+            <li><a href={url('/export/datasets.json')}>Export: JSON</a> · <a href={url('/export/datasets.csv')}>CSV</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Tooling</h4>
+          <ul>
+            <li><a href={SITE.py123d} rel="noopener">py123d – one library for driving datasets</a></li>
+            <li><a href={SITE.repo} rel="noopener">Source on GitHub</a></li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+
+    <dialog id="search-dialog" class="search-dialog" aria-label="Search the wiki">
+      <div class="inner">
+        <div class="top"><strong>Search</strong><button class="icon-btn" type="button" id="close-search" aria-label="Close search"><Icon name="x" size={16} /></button></div>
+        <div id="search-ui"></div>
+        <p class="small muted" id="search-note" hidden>Search works on the published site (the index is built after <code>astro build</code>).</p>
+      </div>
+    </dialog>
+
+    <style is:global>
+      .only-dark { display: none; }
+      :root[data-theme='dark'] .only-dark { display: inline-flex; }
+      :root[data-theme='dark'] .only-light { display: none; }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) .only-dark { display: inline-flex; }
+        :root:not([data-theme='light']) .only-light { display: none; }
+      }
+    </style>
+
+    <script>
+      const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+      // Theme
+      const toggle = document.getElementById('theme-toggle');
+      toggle?.addEventListener('click', () => {
+        const root = document.documentElement;
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const current = root.getAttribute('data-theme') ?? (systemDark ? 'dark' : 'light');
+        const next = current === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('theme', next); } catch {}
+      });
+      // Search (Pagefind, loaded lazily from the built index)
+      const dialog = document.getElementById('search-dialog') as HTMLDialogElement | null;
+      let loaded = false;
+      async function openSearch() {
+        if (!dialog) return;
+        dialog.showModal();
+        if (loaded) return;
+        loaded = true;
+        try {
+          const css = document.createElement('link');
+          css.rel = 'stylesheet';
+          css.href = `${base}/pagefind/pagefind-ui.css`;
+          document.head.appendChild(css);
+          await new Promise<void>((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = `${base}/pagefind/pagefind-ui.js`;
+            s.onload = () => resolve();
+            s.onerror = () => reject(new Error('pagefind not available'));
+            document.head.appendChild(s);
+          });
+          // @ts-expect-error PagefindUI is a global from the injected script
+          new PagefindUI({ element: '#search-ui', showSubResults: true, showImages: false, baseUrl: `${base}/`, autofocus: true });
+        } catch {
+          document.getElementById('search-note')?.removeAttribute('hidden');
+        }
+      }
+      document.getElementById('open-search')?.addEventListener('click', openSearch);
+      document.getElementById('close-search')?.addEventListener('click', () => dialog?.close());
+      dialog?.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) { e.preventDefault(); openSearch(); }
+      });
+    </script>
+  </body>
+</html>

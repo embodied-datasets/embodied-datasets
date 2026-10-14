@@ -1,0 +1,16 @@
+- id: predecessor
+  label: Predecessor
+- id: successor
+  label: Successor
+- id: derived_from
+  label: Derived from
+- id: extends
+  label: Extends
+- id: shares_rig_with
+  label: Shares sensor rig with
+- id: subset_of
+  label: Subset of
+- id: companion
+  label: Companion dataset
+- id: reconstruction_of
+  label: Reconstruction of

@@ -1,0 +1,95 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE, url } from '../../lib/site.ts';
+const example = `name: Example Dataset
+tagline: One sentence that says what makes this dataset different.
+domain: driving
+family: example-family            # optional, slug of families/<slug>.yaml
+release_date: 2024-05             # YYYY, YYYY-MM or YYYY-MM-DD
+organizations: [example-org]      # slugs of organizations/<slug>.yaml
+homepage: https://example.org/dataset
+papers:
+  - title: "Example: A dataset"
+    venue: CVPR 2024
+    year: 2024
+    arxiv: "2405.12345"
+availability:
+  status: available-registration
+  last_verified: 2026-10-14
+  verified_by: human
+  access_methods: [registration]
+  cost: free
+  evidence:
+    - url: https://example.org/download
+      checked: 2026-10-14
+      http_status: 200
+      note: Download page online; requires a free account.
+legal:
+  licenses:
+    - { id: CC-BY-NC-SA-4.0, name: Creative Commons BY-NC-SA 4.0, url: https://creativecommons.org/licenses/by-nc-sa/4.0/ }
+  permissions: { commercial: false, attribution_required: true }
+collection:
+  reality: real
+  locations:
+    - { city: Karlsruhe, country: DE, lat: 49.01, lon: 8.40 }
+scale: { logs: 1000, log_unit: scenes, scene_duration_s: 20, hours: 5.6 }
+modalities: [ego_pose, camera, lidar, boxes_3d]
+sensors:
+  - { type: camera, count: 6, hz: 12, resolution: 1600×900, ids: [PCAM_F0, PCAM_B0] }
+  - { type: lidar, count: 1, hz: 20, beams: 32, ids: [LIDAR_TOP] }
+annotations:
+  - { type: boxes_3d, classes: 23, hz: 2, method: human }
+maps: { available: false }
+sources:
+  scale: https://example.org/dataset
+curation:
+  created: 2026-10-14
+  updated: 2026-10-14
+  contributors: ["Your Name"]
+  schema_version: 0.1.0`;
+---
+<Base title="Contribute" description="How to add a dataset record or fix one, and what counts as evidence for an availability status.">
+  <div class="page-head">
+    <h1>Contribute</h1>
+    <p class="lead">Everything on this site comes from YAML files in a public repository. Fixing a fact is a one-line pull request; adding a dataset is one directory.</p>
+  </div>
+  <div class="prose">
+    <h2>Three ways to help</h2>
+    <ol>
+      <li><strong>Request a dataset.</strong> Open an <a href={`${SITE.repo}/issues/new?template=add-dataset.yml`} rel="noopener">"Add dataset" issue</a> with the homepage and paper URL. A maintainer (or an agent, reviewed by a maintainer) drafts the record.</li>
+      <li><strong>Fix or verify a fact.</strong> Every dataset page has an "Edit on GitHub" button. If you confirm an availability status, set <code>verified_by: human</code>, bump <code>last_verified</code> and add what you observed to <code>evidence</code>.</li>
+      <li><strong>Add a record yourself.</strong> Follow the steps below.</li>
+    </ol>
+
+    <h2>Adding a record</h2>
+    <ol>
+      <li>Fork and clone <a href={SITE.repo} rel="noopener">the repository</a>, run <code>npm install</code>.</li>
+      <li>Create <code>datasets/&lt;slug&gt;/dataset.yaml</code>. Slugs are lowercase with hyphens. Add <code>organizations/&lt;slug&gt;.yaml</code> and <code>families/&lt;slug&gt;.yaml</code> if they do not exist.</li>
+      <li>Optionally add <code>datasets/&lt;slug&gt;/page.md</code> with an overview, history and access tips. Reference numbers with shortcodes such as <code>{'{{ scale.hours }}'}</code> instead of typing them; the build fails on a shortcode that does not resolve.</li>
+      <li>Run <code>npm run validate</code> (schema and cross-references), <code>npm run lint:prose</code> (bare numbers in prose) and <code>npm run build</code>.</li>
+      <li>Open a pull request. CI runs the same checks; invalid records cannot be merged.</li>
+    </ol>
+
+    <h3>Minimal record</h3>
+    <pre><code>{example}</code></pre>
+    <p>Unknown keys are rejected, so typos surface immediately. Enumerations live in <code>vocabularies/*.yaml</code>; the full field list is in <a href={`${SITE.repo}/blob/main/schema/dataset.schema.json`} rel="noopener">schema/dataset.schema.json</a>.</p>
+
+    <h2>What counts as evidence</h2>
+    <ul>
+      <li>A dated check of the official download page or hosting API (status code and what you saw), ideally with a Wayback Machine snapshot URL.</li>
+      <li>For gated Hugging Face datasets: the API response (<code>gated</code>, <code>private</code>, <code>lastModified</code>).</li>
+      <li>For a disappearance: the first archived snapshot showing the failure, an issue thread, or an announcement.</li>
+      <li>Mirrors need a host, URL, whether they are official, and when you last checked them.</li>
+    </ul>
+    <p>An agent may set any status except <em>discontinued</em>; that one, and every licence interpretation, needs a human.</p>
+
+    <h2>Conventions</h2>
+    <ul>
+      <li>Numbers and URLs live in <code>dataset.yaml</code>. Prose refers to them through shortcodes.</li>
+      <li>Scale figures measured from the released data (for instance by py123d) are preferred over marketing numbers; say which in <code>sources</code>.</li>
+      <li>Years alone are fine where the month is unknown (<code>release_date: 2020</code>).</li>
+      <li>Keep <code>curation.notes</code> for things a reviewer should double-check.</li>
+    </ul>
+    <p>See <a href={`${SITE.repo}/blob/main/CONTRIBUTING.md`} rel="noopener">CONTRIBUTING.md</a> and, for coding agents, <a href={`${SITE.repo}/blob/main/AGENTS.md`} rel="noopener">AGENTS.md</a>.</p>
+  </div>
+</Base>

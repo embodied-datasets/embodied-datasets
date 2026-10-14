@@ -1,0 +1,51 @@
+---
+import Base from '../../layouts/Base.astro';
+import DatasetCard from '../../components/DatasetCard.astro';
+import Timeline from '../../components/Timeline.astro';
+import { getDatasets, getFamilies, getOrganizations } from '../../lib/data.ts';
+import type { FamilyEntry } from '../../lib/data.ts';
+import { url } from '../../lib/site.ts';
+import { renderMarkdown } from '../../lib/markdown.ts';
+export async function getStaticPaths() {
+  const families = await getFamilies();
+  return families.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+interface Props { entry: FamilyEntry }
+const { entry } = Astro.props;
+const f = entry.data;
+const [datasets, families, orgs] = await Promise.all([getDatasets(), getFamilies(), getOrganizations()]);
+const orgName = (id: string) => orgs.find((o) => o.id === id)?.data.name ?? id;
+const members = datasets.filter((d) => d.data.family === entry.id);
+const html = f.description ? renderMarkdown(f.description) : undefined;
+---
+<Base title={f.name} description={f.tagline}>
+  <nav class="breadcrumb" data-pagefind-ignore><a href={url('/')}>Home</a> › <a href={url('/families/')}>Families</a> › <span>{f.name}</span></nav>
+  <div class="page-head" style="padding-top:0">
+    <div class="eyebrow">Dataset family</div>
+    <h1>{f.name}</h1>
+    {f.aliases.length > 0 && <div class="muted small">Also known as {f.aliases.join(', ')}</div>}
+    <p class="lead">{f.tagline}</p>
+    <div class="row small muted">
+      {f.organizations.length > 0 && <span>by {f.organizations.map((o, i) => <span><a href={url(`/organizations/${o}/`)}>{orgName(o)}</a>{i < f.organizations.length - 1 ? ', ' : ''}</span>)}</span>}
+      {f.homepage && <span>· <a href={f.homepage} rel="noopener">{f.homepage.replace(/^https?:\/\//, '')} ↗</a></span>}
+    </div>
+  </div>
+  {html && <div class="prose" set:html={html} />}
+  <section class="section">
+    <h2>Members with records ({members.length})</h2>
+    <div class="grid cards">{members.map((e) => <DatasetCard entry={e} orgNames={e.data.organizations.map(orgName)} />)}</div>
+  </section>
+  {members.length > 1 && (
+    <section class="section">
+      <h2>Timeline</h2>
+      <div class="card" style="padding:1rem 0.75rem"><Timeline datasets={members} families={families} /></div>
+    </section>
+  )}
+  {f.not_yet_recorded.length > 0 && (
+    <section class="section">
+      <h2>Known gaps</h2>
+      <p>These members have no record yet. <a href={url('/contribute/')}>Add one</a>:</p>
+      <ul>{f.not_yet_recorded.map((n) => <li>{n}</li>)}</ul>
+    </section>
+  )}
+</Base>

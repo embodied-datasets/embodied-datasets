@@ -1,0 +1,28 @@
+---
+import Base from '../../layouts/Base.astro';
+import Timeline from '../../components/Timeline.astro';
+import StatusBadge from '../../components/StatusBadge.astro';
+import { getDatasets, getFamilies, getOrganizations, groupBy, releaseYear } from '../../lib/data.ts';
+import { url, fmtDate } from '../../lib/site.ts';
+const [datasets, families, orgs] = await Promise.all([getDatasets(), getFamilies(), getOrganizations()]);
+const orgName = (id: string) => orgs.find((o) => o.id === id)?.data.name ?? id;
+const byYear = groupBy(datasets.filter((d) => releaseYear(d.data)).sort((a, b) => (releaseYear(a.data)! - releaseYear(b.data)!) || a.data.name.localeCompare(b.data.name)), (d) => releaseYear(d.data)!);
+---
+<Base title="Release timeline" description="When each recorded driving dataset was released, and whether it is still available today.">
+  <div class="page-head">
+    <h1>Release timeline</h1>
+    <p class="lead">One lane per family. Dots mark the first release, coloured by today's availability status; a bar extends to the last known update.</p>
+  </div>
+  <div class="card" style="padding:1rem 0.75rem"><Timeline datasets={datasets} families={families} /></div>
+  <section class="section">
+    <h2>By year</h2>
+    {[...byYear.entries()].reverse().map(([year, items]) => (
+      <div style="margin-bottom:1.2rem">
+        <h3 style="margin-top:0">{year}</h3>
+        <ul class="list-plain">
+          {items.map((d) => <li class="row" style="justify-content:space-between"><span><a href={url(`/datasets/${d.id}/`)}><b>{d.data.name}</b></a> <span class="muted small">· {d.data.organizations.map(orgName).join(', ')} · {fmtDate(d.data.release_date)}</span></span><StatusBadge status={d.data.availability.status} short /></li>)}
+        </ul>
+      </div>
+    ))}
+  </section>
+</Base>

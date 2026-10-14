@@ -1,0 +1,10 @@
+name: nuScenes family
+aliases: [Motional datasets]
+tagline: Motional's line of datasets sharing the nuScenes terms of use, sensor conventions and devkit lineage.
+organizations: [motional]
+homepage: https://www.nuscenes.org/
+description: |
+  nuScenes (2019) introduced the 20-second-scene format with six cameras, LiDAR and radar. nuPlan (2021–2024)
+  scaled the recipe to more than a thousand hours of auto-labelled logs for closed-loop planning, and nuReasoning
+  (2026) adds human-verified reasoning annotations on long-tail clips. All three are licensed for non-commercial use
+  under the nuScenes terms, with commercial licenses available on request.

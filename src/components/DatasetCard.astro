@@ -1,0 +1,32 @@
+---
+import type { DatasetEntry } from '../lib/data.ts';
+import { statusOf, countries, releaseYear } from '../lib/data.ts';
+import { url, fmtNum, flag, countryName } from '../lib/site.ts';
+import StatusBadge from './StatusBadge.astro';
+import ModalityIcons from './ModalityIcons.astro';
+interface Props { entry: DatasetEntry; orgNames: string[] }
+const { entry, orgNames } = Astro.props;
+const d = entry.data;
+const year = releaseYear(d);
+const cc = countries(d);
+---
+<a class="card link ds-card" href={url(`/datasets/${entry.id}/`)}>
+  <div class="top">
+    <StatusBadge status={d.availability.status} short />
+    <span class="muted small">{year ?? ''}</span>
+  </div>
+  <h3>{d.name}</h3>
+  <div class="org">{orgNames.join(' · ')}</div>
+  <p class="tagline">{d.tagline}</p>
+  <ModalityIcons modalities={d.modalities} />
+  <div class="foot">
+    <span class="stats-inline">
+      {d.scale.hours !== undefined && <span><b>{fmtNum(d.scale.hours)}</b> h</span>}
+      {d.scale.logs !== undefined && <span><b>{fmtNum(d.scale.logs)}</b> {d.scale.log_unit}</span>}
+    </span>
+    <span class="row" style="gap:0.4rem">
+      <span class:list={['tag', d.collection.reality]}>{d.collection.reality}</span>
+      {cc.length > 0 && <span class="flags" title={cc.map(countryName).join(', ')}>{cc.slice(0, 4).map(flag).join('')}</span>}
+    </span>
+  </div>
+</a>

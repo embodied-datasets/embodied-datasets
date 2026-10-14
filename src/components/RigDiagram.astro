@@ -1,0 +1,64 @@
+---
+/** Schematic top-down sensor layout drawn from the py123d sensor IDs in the record. */
+import { RIG } from '../lib/rig.ts';
+import type { Dataset } from '../lib/data.ts';
+interface Props { dataset: Dataset }
+const { dataset: d } = Astro.props;
+const ids = d.sensors.flatMap((s) => s.ids ?? []);
+const placed = ids.map((id) => ({ id, s: RIG[id] })).filter((x) => x.s);
+const unknown = ids.filter((id) => !RIG[id]);
+if (placed.length === 0) return;
+const SCALE = 42; // px per car unit
+const W = 300, H = 400;
+const cx = W / 2, cy = H / 2;
+const toSvg = (x: number, y: number) => [cx + x * SCALE, cy - y * SCALE] as const;
+function wedge(x: number, y: number, yaw: number, fov: number, r: number): string {
+  const [px, py] = toSvg(x, y);
+  const a1 = ((yaw - fov / 2) * Math.PI) / 180;
+  const a2 = ((yaw + fov / 2) * Math.PI) / 180;
+  const R = r * SCALE;
+  const x1 = px + R * Math.sin(a1), y1 = py - R * Math.cos(a1);
+  const x2 = px + R * Math.sin(a2), y2 = py - R * Math.cos(a2);
+  const large = fov > 180 ? 1 : 0;
+  return `M ${px} ${py} L ${x1.toFixed(1)} ${y1.toFixed(1)} A ${R} ${R} 0 ${large} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z`;
+}
+const body = { x: cx - 0.95 * SCALE, y: cy - 2.15 * SCALE, w: 1.9 * SCALE, h: 4.3 * SCALE };
+const cams = placed.filter((p) => p.s.kind === 'camera');
+const lidars = placed.filter((p) => p.s.kind === 'lidar');
+const radars = placed.filter((p) => p.s.kind === 'radar');
+---
+<figure class="figure">
+  <svg class="rig" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Schematic sensor layout">
+    <defs>
+      <linearGradient id="carfill" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0" stop-color="var(--bg-muted)" />
+        <stop offset="1" stop-color="var(--border)" />
+      </linearGradient>
+    </defs>
+    {cams.map(({ id, s }) => (
+      <path d={wedge(s.x, s.y, s.yaw ?? 0, s.fov ?? 70, 1.6)} fill="var(--c-blue)" fill-opacity="0.14" stroke="var(--c-blue)" stroke-opacity="0.6" stroke-width="1">
+        <title>{id} · camera · {s.label}</title>
+      </path>
+    ))}
+    <rect x={body.x} y={body.y} width={body.w} height={body.h} rx={16} fill="url(#carfill)" stroke="var(--border-strong)" stroke-width="1.5" />
+    <path d={`M ${body.x + 8} ${body.y + 46} q ${body.w / 2 - 8} -18 ${body.w - 16} 0`} fill="none" stroke="var(--border-strong)" stroke-width="1.5" />
+    <path d={`M ${body.x + 8} ${body.y + body.h - 40} q ${body.w / 2 - 8} 14 ${body.w - 16} 0`} fill="none" stroke="var(--border-strong)" stroke-width="1.5" />
+    <polygon points={`${cx},${body.y - 14} ${cx - 5},${body.y - 4} ${cx + 5},${body.y - 4}`} fill="var(--muted)" />
+    {lidars.map(({ id, s }) => { const [px, py] = toSvg(s.x, s.y); return (
+      <g>
+        <circle cx={px} cy={py} r={id === 'LIDAR_TOP' ? 26 : 14} fill="none" stroke="var(--c-green)" stroke-dasharray="3 3" stroke-width="1.2" />
+        <circle cx={px} cy={py} r={id === 'LIDAR_TOP' ? 7 : 5} fill="var(--c-green)"><title>{id} · LiDAR · {s.label}</title></circle>
+      </g>
+    ); })}
+    {radars.map(({ id, s }) => { const [px, py] = toSvg(s.x, s.y); return (
+      <polygon points={`${px},${py - 6} ${px + 6},${py} ${px},${py + 6} ${px - 6},${py}`} fill="var(--c-amber)"><title>{id} · radar · {s.label}</title></polygon>
+    ); })}
+    {cams.map(({ id, s }) => { const [px, py] = toSvg(s.x, s.y); return (
+      <circle cx={px} cy={py} r={4} fill="var(--c-blue)" stroke="var(--bg-elev)" stroke-width="1.2"><title>{id} · camera · {s.label}</title></circle>
+    ); })}
+  </svg>
+  <figcaption>
+    Schematic rig derived from py123d sensor IDs: <span class="fg-blue">■</span> cameras with nominal fields of view, <span class="fg-green">●</span> LiDARs, <span class="fg-amber">◆</span> radars. Not to scale.
+    {unknown.length > 0 && <span> Not placed: {unknown.join(', ')}.</span>}
+  </figcaption>
+</figure>

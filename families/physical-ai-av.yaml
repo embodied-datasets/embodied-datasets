@@ -1,0 +1,9 @@
+name: NVIDIA Physical AI Autonomous Vehicles
+aliases: [PAI-AV, PhysicalAI-Autonomous-Vehicles]
+tagline: "NVIDIA's gated Hugging Face releases recorded on the Hyperion sensor platform: raw clips (PAI-AV), the NCore repackaging and NuRec neural reconstructions."
+organizations: [nvidia]
+homepage: https://huggingface.co/datasets/nvidia/PhysicalAI-Autonomous-Vehicles
+description: |
+  All members share the NVIDIA AV dataset license and the Hyperion 8 rig with seven f-theta cameras and a 360°
+  LiDAR. NCore ships a subset in the component-based NCore V4 format; NuRec reconstructs clips as renderable
+  3D Gaussian scenes for closed-loop simulation.

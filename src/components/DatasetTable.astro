@@ -1,0 +1,195 @@
+---
+/** Filterable, sortable comparison table. Filtering and sorting run client-side on data attributes. */
+import type { DatasetEntry, OrgEntry } from '../lib/data.ts';
+import { statusOf, sensorSummary, annotationHz, hasAnnotation, countries, releaseYear, primaryLicense } from '../lib/data.ts';
+import { url, fmtNum, flag, countryName } from '../lib/site.ts';
+import { STATUS, MODALITIES } from '../schema/vocab.ts';
+import StatusBadge from './StatusBadge.astro';
+import Icon from './Icon.astro';
+interface Props { datasets: DatasetEntry[]; orgs: OrgEntry[] }
+const { datasets, orgs } = Astro.props;
+const orgName = (id: string) => orgs.find((o) => o.id === id)?.data.name ?? id;
+const shortOrg = (id: string) => orgName(id).split(/[,(]/)[0].trim();
+const rows = datasets.map((e) => {
+  const d = e.data;
+  const cam = sensorSummary(d, 'camera');
+  const lid = sensorSummary(d, 'lidar');
+  const rad = sensorSummary(d, 'radar');
+  const lic = primaryLicense(d);
+  return {
+    e, d, cam, lid, rad, lic,
+    year: releaseYear(d),
+    status: statusOf(d),
+    cc: countries(d),
+    boxesHz: annotationHz(d, 'boxes_3d'),
+    hasBoxes: hasAnnotation(d, 'boxes_3d') || d.modalities.includes('boxes_3d'),
+    hasTl: d.modalities.includes('traffic_lights'),
+    commercial: d.legal.permissions.commercial,
+    search: [d.name, ...d.aliases, d.tagline, ...d.organizations.map(orgName), ...d.collection.locations.map((l) => `${l.city ?? ''} ${countryName(l.country)}`)].join(' ').toLowerCase(),
+  };
+});
+const filterMods = MODALITIES.filter((m) => ['camera', 'lidar', 'radar', 'hd_map', 'boxes_3d', 'traffic_lights', 'segmentation', 'trajectories', 'language'].includes(m.id));
+---
+<div class="filters" data-pagefind-ignore>
+  <input type="search" id="q" placeholder="Search name, organization, city…" aria-label="Search datasets" />
+  <select id="f-reality" aria-label="Real or synthetic">
+    <option value="">Real & synthetic</option>
+    <option value="real">Real-world only</option>
+    <option value="synthetic">Synthetic only</option>
+    <option value="hybrid">Hybrid only</option>
+  </select>
+  <label class="chip" style="cursor:pointer"><input type="checkbox" id="f-commercial" style="margin:0" /> Commercial use allowed</label>
+  <label class="chip" style="cursor:pointer"><input type="checkbox" id="f-downloadable" style="margin:0" /> Downloadable today</label>
+</div>
+<div class="filters" data-pagefind-ignore>
+  <span class="small muted">Status:</span>
+  {STATUS.map((s) => <button type="button" class="chip" data-filter="status" data-value={s.id} aria-pressed="false"><span class:list={['sw', `c-${s.color}`]} style="width:8px;height:8px;border-radius:50%;display:inline-block"></span>{s.short ?? s.label}</button>)}
+</div>
+<div class="filters" data-pagefind-ignore>
+  <span class="small muted">Must include:</span>
+  {filterMods.map((m) => <button type="button" class="chip" data-filter="modality" data-value={m.id} aria-pressed="false">{m.label}</button>)}
+  <button type="button" class="chip" id="f-reset">Reset</button>
+</div>
+<div class="table-wrap">
+  <table class="cmp" id="cmp">
+    <thead>
+      <tr>
+        <th data-sort="name" data-type="str" aria-sort="ascending">Dataset<span class="arrow"></span></th>
+        <th data-sort="year" data-type="num" class="num">Year<span class="arrow"></span></th>
+        <th data-sort="status" data-type="str">Availability<span class="arrow"></span></th>
+        <th data-sort="reality" data-type="str">Type<span class="arrow"></span></th>
+        <th data-sort="cams" data-type="num" class="num" title="Cameras: count / Hz">Cam.<span class="arrow"></span></th>
+        <th data-sort="lidars" data-type="num" class="num" title="LiDARs: count / Hz">LiDAR<span class="arrow"></span></th>
+        <th title="Radar">Radar</th>
+        <th title="HD map">Map</th>
+        <th data-sort="boxes" data-type="num" class="num" title="3D boxes: annotation rate in Hz">3D box<span class="arrow"></span></th>
+        <th title="Traffic-light states">TL</th>
+        <th data-sort="hours" data-type="num" class="num">Hours<span class="arrow"></span></th>
+        <th data-sort="km" data-type="num" class="num">km<span class="arrow"></span></th>
+        <th data-sort="logs" data-type="num" class="num">Logs<span class="arrow"></span></th>
+        <th data-sort="license" data-type="str">Licence<span class="arrow"></span></th>
+        <th title="Commercial use allowed by the data licence">Comm.</th>
+        <th>Where</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((r) => (
+        <tr
+          data-name={r.d.name.toLowerCase()}
+          data-year={r.year ?? ''}
+          data-status={r.d.availability.status}
+          data-reality={r.d.collection.reality}
+          data-modalities={r.d.modalities.join(' ')}
+          data-commercial={r.commercial === undefined ? 'unknown' : r.commercial ? 'yes' : 'no'}
+          data-downloadable={r.status.downloadable === false ? 'no' : 'yes'}
+          data-cams={r.cam?.count ?? ''}
+          data-lidars={r.lid?.count ?? ''}
+          data-boxes={r.boxesHz ?? (r.hasBoxes ? 0 : '')}
+          data-hours={r.d.scale.hours ?? ''}
+          data-km={r.d.scale.km ?? ''}
+          data-logs={r.d.scale.logs ?? ''}
+          data-license={r.lic?.id ?? ''}
+          data-search={r.search}
+        >
+          <td class="name"><a href={url(`/datasets/${r.e.id}/`)}>{r.d.name}</a><span class="org">{r.d.organizations.map(shortOrg).join(', ')}</span></td>
+          <td class="num">{r.year ?? '–'}</td>
+          <td><StatusBadge status={r.d.availability.status} short /></td>
+          <td><span class:list={['tag', r.d.collection.reality]}>{r.d.collection.reality}</span></td>
+          <td class="num cnt">{r.cam ? <span>{r.cam.count || '✓'}{r.cam.hz && <span class="hz"> / {fmtNum(r.cam.hz)}</span>}</span> : <span class="no">✗</span>}</td>
+          <td class="num cnt">{r.lid ? <span>{r.lid.count || '✓'}{r.lid.hz && <span class="hz"> / {fmtNum(r.lid.hz)}</span>}</span> : <span class="no">✗</span>}</td>
+          <td>{r.rad || r.d.modalities.includes('radar') ? <span class="yes">✓</span> : <span class="no">✗</span>}</td>
+          <td>{r.d.maps.available ? <span class="yes">✓</span> : <span class="no">✗</span>}</td>
+          <td class="num cnt">{r.hasBoxes ? <span class="yes">✓{r.boxesHz && <span class="hz"> / {fmtNum(r.boxesHz)}</span>}</span> : <span class="no">✗</span>}</td>
+          <td>{r.hasTl ? <span class="yes">✓</span> : <span class="no">✗</span>}</td>
+          <td class="num">{fmtNum(r.d.scale.hours)}</td>
+          <td class="num">{fmtNum(r.d.scale.km)}</td>
+          <td class="num">{fmtNum(r.d.scale.logs)}</td>
+          <td><span class="mono" title={r.lic?.name}>{r.lic?.id ?? '–'}</span></td>
+          <td>{r.commercial === true ? <span class="yes" title="Commercial use allowed">✓</span> : r.commercial === false ? <span class="no" title="Non-commercial">✗</span> : <span class="maybe" title="Not assessed">?</span>}</td>
+          <td class="flags" title={r.cc.map(countryName).join(', ')}>{r.cc.length ? r.cc.map(flag).join('') : <span class="muted">–</span>}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+  <div class="empty" id="cmp-empty" hidden>No dataset matches these filters.</div>
+</div>
+<p class="count-note" id="cmp-count"></p>
+
+<script>
+  const table = document.getElementById('cmp') as HTMLTableElement | null;
+  if (table) {
+    const tbody = table.tBodies[0];
+    const rows = Array.from(tbody.rows);
+    const q = document.getElementById('q') as HTMLInputElement;
+    const reality = document.getElementById('f-reality') as HTMLSelectElement;
+    const commercial = document.getElementById('f-commercial') as HTMLInputElement;
+    const downloadable = document.getElementById('f-downloadable') as HTMLInputElement;
+    const countEl = document.getElementById('cmp-count')!;
+    const empty = document.getElementById('cmp-empty')!;
+    const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('button.chip[data-filter]'));
+    const active = { status: new Set<string>(), modality: new Set<string>() };
+
+    function apply() {
+      const text = q.value.trim().toLowerCase();
+      let shown = 0;
+      for (const r of rows) {
+        const ds = r.dataset;
+        let ok = true;
+        if (text && !ds.search!.includes(text)) ok = false;
+        if (ok && reality.value && ds.reality !== reality.value) ok = false;
+        if (ok && commercial.checked && ds.commercial !== 'yes') ok = false;
+        if (ok && downloadable.checked && ds.downloadable !== 'yes') ok = false;
+        if (ok && active.status.size && !active.status.has(ds.status!)) ok = false;
+        if (ok && active.modality.size) {
+          const mods = ds.modalities!.split(' ');
+          for (const m of active.modality) if (!mods.includes(m)) { ok = false; break; }
+        }
+        r.hidden = !ok;
+        if (ok) shown++;
+      }
+      empty.hidden = shown > 0;
+      countEl.textContent = `Showing ${shown} of ${rows.length} datasets.`;
+    }
+
+    for (const c of chips) {
+      c.addEventListener('click', () => {
+        const set = active[c.dataset.filter as 'status' | 'modality'];
+        const v = c.dataset.value!;
+        if (set.has(v)) set.delete(v); else set.add(v);
+        c.setAttribute('aria-pressed', String(set.has(v)));
+        apply();
+      });
+    }
+    document.getElementById('f-reset')?.addEventListener('click', () => {
+      q.value = ''; reality.value = ''; commercial.checked = false; downloadable.checked = false;
+      active.status.clear(); active.modality.clear();
+      chips.forEach((c) => c.setAttribute('aria-pressed', 'false'));
+      apply();
+    });
+    [q, reality, commercial, downloadable].forEach((el) => el.addEventListener('input', apply));
+
+    // Sorting
+    const headers = Array.from(table.tHead!.querySelectorAll<HTMLTableCellElement>('th[data-sort]'));
+    for (const th of headers) {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort!;
+        const type = th.dataset.type;
+        const dir = th.getAttribute('aria-sort') === 'ascending' ? 'descending' : 'ascending';
+        headers.forEach((h) => h.removeAttribute('aria-sort'));
+        th.setAttribute('aria-sort', dir);
+        const sign = dir === 'ascending' ? 1 : -1;
+        rows.sort((a, b) => {
+          const av = a.dataset[key] ?? '', bv = b.dataset[key] ?? '';
+          if (type === 'num') {
+            const an = av === '' ? Number.NEGATIVE_INFINITY : Number(av);
+            const bn = bv === '' ? Number.NEGATIVE_INFINITY : Number(bv);
+            return (an - bn) * sign;
+          }
+          return av.localeCompare(bv) * sign;
+        });
+        rows.forEach((r) => tbody.appendChild(r));
+      });
+    }
+    apply();
+  }
+</script>

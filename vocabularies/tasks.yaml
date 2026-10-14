@@ -1,0 +1,32 @@
+- id: 3d_detection
+  label: 3D object detection
+- id: 3d_tracking
+  label: 3D multi-object tracking
+- id: 2d_detection
+  label: 2D object detection
+- id: semantic_segmentation
+  label: Semantic segmentation
+- id: panoptic_segmentation
+  label: Panoptic segmentation
+- id: motion_forecasting
+  label: Motion forecasting
+- id: planning
+  label: Planning
+- id: end_to_end_driving
+  label: End-to-end driving
+- id: occupancy_prediction
+  label: Occupancy prediction
+- id: map_perception
+  label: HD map perception
+- id: novel_view_synthesis
+  label: Novel view synthesis
+- id: depth_estimation
+  label: Depth estimation
+- id: visual_question_answering
+  label: Visual question answering
+- id: cooperative_perception
+  label: Cooperative perception
+- id: scene_completion
+  label: Semantic scene completion
+- id: simulation
+  label: Closed-loop simulation

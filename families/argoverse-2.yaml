@@ -1,0 +1,9 @@
+name: Argoverse 2
+aliases: [AV2]
+tagline: The second generation of Argo AI's open datasets, released as Sensor, Lidar, Motion Forecasting and Map Change datasets.
+organizations: [argo-ai]
+homepage: https://www.argoverse.org/av2.html
+description: |
+  Argoverse 2 was published in 2021 by Argo AI, which shut down in October 2022. The data remains on a public,
+  anonymously readable S3 bucket, which makes it a useful case study for how a dataset can outlive its creator.
+not_yet_recorded: [Argoverse 2 Lidar, Argoverse 2 Motion Forecasting, Argoverse 2 Map Change (TbV), Argoverse 1]

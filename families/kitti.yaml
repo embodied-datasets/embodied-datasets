@@ -1,0 +1,5 @@
+name: KITTI
+tagline: The Karlsruhe benchmark suite from the Autonomous Vision Group; KITTI-360 is its 360° successor.
+organizations: [avg-tuebingen]
+homepage: https://www.cvlibs.net/datasets/kitti/
+not_yet_recorded: [KITTI (2012), Virtual KITTI, SemanticKITTI]

@@ -1,0 +1,9 @@
+---
+import { STATUS_BY_ID } from '../schema/vocab.ts';
+interface Props { status: string; size?: 'sm' | 'lg'; short?: boolean }
+const { status, size = 'sm', short = false } = Astro.props;
+const info = STATUS_BY_ID[status];
+const color = info?.color ?? 'gray';
+const label = short ? (info?.short ?? info?.label ?? status) : (info?.label ?? status);
+---
+<span class:list={['badge', color, { lg: size === 'lg' }]} title={info?.description}><span class="dot"></span>{label}</span>
