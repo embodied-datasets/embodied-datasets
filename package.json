@@ -37,7 +37,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/embodied-datasets/embodied-datasets.git"
+    "url": "git+https://github.com/embodied-datasets/embodied-datasets.github.io.git"
   },
-  "homepage": "https://embodied-datasets.github.io/embodied-datasets/"
+  "homepage": "https://embodied-datasets.github.io/"
 }

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/embodied-datasets/embodied-datasets/blob/main/schema/organization.schema.json",
+  "$id": "https://github.com/embodied-datasets/embodied-datasets.github.io/blob/main/schema/organization.schema.json",
   "title": "Embodied Datasets – organization record",
   "type": "object",
   "properties": {

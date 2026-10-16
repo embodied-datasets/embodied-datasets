@@ -6,8 +6,9 @@ Short, dated notes on decisions that are not obvious from the code. Newest first
 
 - **Hosting moved to the `embodied-datasets` GitHub organization** so that the site is not tied to a personal
   account and contributors can be given repository access without access to anyone's profile. The repository
-  name stays `embodied-datasets`; the site lives at `https://embodied-datasets.github.io/embodied-datasets/` until
-  a custom domain is set (then `SITE_BASE=/`).
+  is renamed `embodied-datasets.github.io` so that the site is the organization site at
+  `https://embodied-datasets.github.io/` (base path `/`); a custom domain later only needs the
+  `SITE_URL` and `CUSTOM_DOMAIN` variables.
 - **Publishing is gated by branch protection, not by ownership:** pull request + review required on `main`,
   the `validate` CI job as required check, CODEOWNERS for schema, vocabularies and site code.
 - **Pages switched from Actions-artifact deploys to the `gh-pages` branch** because GitHub Pages serves one site

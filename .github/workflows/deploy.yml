@@ -38,7 +38,7 @@ jobs:
         env:
           # Repository variables (Settings → Secrets and variables → Actions → Variables) override the defaults:
           #   SITE_URL       e.g. https://robotdatasets.wiki   (custom domain)
-          #   SITE_BASE      e.g. /                            (custom domain or <org>.github.io repository)
+          #   SITE_BASE      e.g. /                            (custom domain; a repository named <owner>.github.io gets / automatically)
           #   CUSTOM_DOMAIN  e.g. robotdatasets.wiki           (writes the CNAME file Pages needs)
           VAR_SITE_URL: ${{ vars.SITE_URL }}
           VAR_SITE_BASE: ${{ vars.SITE_BASE }}
@@ -47,9 +47,10 @@ jobs:
           REPO: ${{ github.event.repository.name }}
         run: |
           OWNER_LC="$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
+          REPO_LC="$(echo "$REPO" | tr '[:upper:]' '[:lower:]')"
           export SITE_URL="${VAR_SITE_URL:-https://${OWNER_LC}.github.io}"
           if [ -n "$VAR_SITE_BASE" ]; then export SITE_BASE="$VAR_SITE_BASE";
-          else case "$REPO" in *.github.io) export SITE_BASE="/";; *) export SITE_BASE="/$REPO";; esac; fi
+          else if [ "$REPO_LC" = "${OWNER_LC}.github.io" ]; then export SITE_BASE="/"; else export SITE_BASE="/$REPO"; fi; fi
           echo "Building for $SITE_URL$SITE_BASE"
           npm run build
           if [ -n "$CUSTOM_DOMAIN" ]; then echo "$CUSTOM_DOMAIN" > dist/CNAME; fi

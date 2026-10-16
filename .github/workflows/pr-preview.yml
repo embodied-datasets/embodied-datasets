@@ -41,12 +41,14 @@ jobs:
           PR: ${{ github.event.number }}
         run: |
           OWNER_LC="$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
+          REPO_LC="$(echo "$REPO" | tr '[:upper:]' '[:lower:]')"
           export SITE_URL="${VAR_SITE_URL:-https://${OWNER_LC}.github.io}"
           if [ -n "$VAR_SITE_BASE" ]; then BASE="$VAR_SITE_BASE";
-          else case "$REPO" in *.github.io) BASE="/";; *) BASE="/$REPO";; esac; fi
+          else if [ "$REPO_LC" = "${OWNER_LC}.github.io" ]; then BASE="/"; else BASE="/$REPO"; fi; fi
           BASE="${BASE%/}"
           export SITE_BASE="$BASE/pr-preview/pr-$PR"
           echo "Building preview for $SITE_URL$SITE_BASE"
+          echo "PAGES_BASE_URL=${SITE_URL#https://}${BASE}" >> "$GITHUB_ENV"
           npm run build
       - name: Deploy or remove the preview
         uses: rossjrw/pr-preview-action@v1
@@ -55,3 +57,4 @@ jobs:
           preview-branch: gh-pages
           umbrella-dir: pr-preview
           action: auto
+          pages-base-url: ${{ env.PAGES_BASE_URL }}
