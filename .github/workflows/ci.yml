@@ -1,0 +1,31 @@
+name: CI
+
+# Validation and a test build for every pull request, including ones from forks.
+# Make the "validate" job a required status check in the branch protection rule for main.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Validate records (schema, cross-references)
+        run: npm run validate
+      - name: Lint prose for bare numbers (warnings only)
+        run: npm run lint:prose
+      - name: Check that the exported JSON Schema is up to date
+        run: |
+          npm run schema
+          git diff --exit-code -- schema || (echo "::error::schema/*.json is stale – run 'npm run schema' and commit the result" && exit 1)
+      - name: Build site
+        run: npm run build

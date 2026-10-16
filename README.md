@@ -2,7 +2,7 @@
 
 **A community-maintained wiki of autonomous driving (and, later, robotics) datasets, with availability as a first-class, dated, evidence-backed field.**
 
-Live site: https://danieldauner.github.io/embodied-datasets/
+Live site: https://embodied-datasets.github.io/embodied-datasets/
 
 Datasets disappear quietly: download pages vanish, companies shut down, licences change. Survey papers and awesome-lists
 capture a snapshot and rot. This repository keeps **one schema-validated record per dataset** (sensors, annotations,
@@ -55,11 +55,26 @@ npm run preview
 The site is built for GitHub Pages under `/embodied-datasets/`. `SITE_URL` and `SITE_BASE` override the base
 (for a custom domain: `SITE_BASE=/`). The deploy workflow derives both from the repository name.
 
+## Deployment and previews
+
+- **Production:** every push to `main` runs `.github/workflows/deploy.yml`, which validates, builds and publishes
+  `dist/` to the `gh-pages` branch. GitHub Pages serves that branch (Settings → Pages → Source: *Deploy from a
+  branch*, `gh-pages`, `/ (root)`). `main` is protected, so only reviewed pull requests reach the site.
+- **Pull-request previews:** `.github/workflows/pr-preview.yml` builds every PR from a branch in this repository
+  and publishes it to `https://embodied-datasets.github.io/embodied-datasets/pr-preview/pr-<number>/`, posts the
+  link as a PR comment and removes the preview when the PR closes. PRs from forks are validated by `ci.yml`
+  but not previewed, because that would run untrusted code with a write token.
+- **Your own copy:** fork the repository and enable Pages on the fork (Source: *Deploy from a branch*,
+  `gh-pages`). The workflows derive the site URL from the fork's owner and name, so
+  `https://<you>.github.io/embodied-datasets/` works without changing anything.
+- **Custom domain:** set the repository variables `SITE_URL` (e.g. `https://robotdatasets.wiki`),
+  `SITE_BASE=/` and `CUSTOM_DOMAIN` (writes the `CNAME` file on every deploy).
+
 ## Adding or fixing a record
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) (humans) and [AGENTS.md](AGENTS.md) (coding agents). The short version:
 copy an existing `datasets/<slug>/` directory, edit, run `npm run validate`, open a pull request. The
-[Add dataset](https://github.com/DanielDauner/embodied-datasets/issues/new?template=add-dataset.yml) issue template
+[Add dataset](https://github.com/embodied-datasets/embodied-datasets/issues/new?template=add-dataset.yml) issue template
 is for requests without a record.
 
 ## Status

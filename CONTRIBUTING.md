@@ -24,7 +24,8 @@ npm run lint:prose    # bare numbers in page.md; warnings, please fix the obviou
 npm run build         # catches unresolved shortcodes and rendering errors
 ```
 
-CI runs the same commands. A record that does not validate cannot be merged.
+CI runs the same commands. A record that does not validate cannot be merged. For pull requests from branches in
+this repository a preview of the whole site is published automatically and linked in a comment on the PR.
 
 ## Record conventions
 

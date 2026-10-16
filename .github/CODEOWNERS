@@ -1,0 +1,16 @@
+# Code owners are requested for review automatically and, with the branch protection
+# rule "Require review from Code Owners", must approve before a pull request can merge.
+# Ownership is split by dataset family (see docs/DECISIONS.md), not by field.
+
+# Default: everything
+* @DanielDauner
+
+# Schema, vocabularies and site code stay with the maintainers
+/src/ @DanielDauner
+/schema/ @DanielDauner
+/vocabularies/ @DanielDauner
+/.github/ @DanielDauner
+
+# Add family maintainers as they join, e.g. (teams need write access on the repository):
+# /datasets/nuscenes/ /datasets/nuplan/ /datasets/nureasoning/ /families/nuscenes.yaml   @embodied-datasets/nuscenes-maintainers
+# /datasets/wod-perception/ /datasets/wod-motion/ /families/waymo-open-dataset.yaml       @embodied-datasets/waymo-maintainers

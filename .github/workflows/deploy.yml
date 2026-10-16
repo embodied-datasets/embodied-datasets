@@ -1,22 +1,23 @@
 name: Build and deploy
 
+# Builds the site on every push to main and publishes it to the gh-pages branch.
+# GitHub Pages must be configured with Source = "Deploy from a branch", branch gh-pages, folder / (root).
+# PR previews live in pr-preview/ on the same branch (see pr-preview.yml) and are kept across deploys.
+
 on:
   push:
     branches: [main]
-  pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: gh-pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,26 +36,28 @@ jobs:
           git diff --exit-code -- schema || (echo "::error::schema/*.json is stale – run 'npm run schema' and commit the result" && exit 1)
       - name: Build site
         env:
-          # Project site on GitHub Pages: https://<owner>.github.io/<repo>/
-          # Set a repository variable SITE_URL / SITE_BASE to override (e.g. for a custom domain: SITE_BASE=/).
-          SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io', github.repository_owner) }}
-          SITE_BASE: ${{ vars.SITE_BASE || format('/{0}', github.event.repository.name) }}
+          # Repository variables (Settings → Secrets and variables → Actions → Variables) override the defaults:
+          #   SITE_URL       e.g. https://robotdatasets.wiki   (custom domain)
+          #   SITE_BASE      e.g. /                            (custom domain or <org>.github.io repository)
+          #   CUSTOM_DOMAIN  e.g. robotdatasets.wiki           (writes the CNAME file Pages needs)
+          VAR_SITE_URL: ${{ vars.SITE_URL }}
+          VAR_SITE_BASE: ${{ vars.SITE_BASE }}
+          CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
         run: |
-          export SITE_URL="$(echo "$SITE_URL" | tr '[:upper:]' '[:lower:]')"
+          OWNER_LC="$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
+          export SITE_URL="${VAR_SITE_URL:-https://${OWNER_LC}.github.io}"
+          if [ -n "$VAR_SITE_BASE" ]; then export SITE_BASE="$VAR_SITE_BASE";
+          else case "$REPO" in *.github.io) export SITE_BASE="/";; *) export SITE_BASE="/$REPO";; esac; fi
           echo "Building for $SITE_URL$SITE_BASE"
           npm run build
-      - uses: actions/upload-pages-artifact@v3
-        if: github.event_name != 'pull_request'
+          if [ -n "$CUSTOM_DOMAIN" ]; then echo "$CUSTOM_DOMAIN" > dist/CNAME; fi
+      - name: Publish to the gh-pages branch (keeps pr-preview/)
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: dist
-
-  deploy:
-    if: github.event_name != 'pull_request'
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          folder: dist
+          branch: gh-pages
+          clean: true
+          clean-exclude: pr-preview
+          commit-message: "deploy: ${{ github.sha }}"

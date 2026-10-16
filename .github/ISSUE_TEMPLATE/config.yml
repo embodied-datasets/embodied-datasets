@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
   - name: Fix a fact directly
-    url: https://github.com/DanielDauner/embodied-datasets/tree/main/datasets
+    url: https://github.com/embodied-datasets/embodied-datasets/tree/main/datasets
     about: Every dataset page has an "Edit on GitHub" button; small fixes are easiest as a pull request.

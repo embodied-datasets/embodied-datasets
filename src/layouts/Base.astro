@@ -19,7 +19,7 @@ const nav = [
   { href: '/about/', label: 'About' },
 ];
 const isCurrent = (href: string) => path.startsWith(url(href));
-const canonical = new URL(path, Astro.site ?? 'https://danieldauner.github.io').toString();
+const canonical = new URL(path, Astro.site ?? 'https://embodied-datasets.github.io').toString();
 ---
 <!doctype html>
 <html lang="en">

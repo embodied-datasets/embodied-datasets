@@ -22,7 +22,7 @@ for (const [file, schema, title] of entries) {
   const json = z.toJSONSchema(schema, { target: 'draft-2020-12', io: 'input', unrepresentable: 'any' }) as Record<string, unknown>;
   const withMeta = {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
-    $id: `https://github.com/DanielDauner/embodied-datasets/blob/main/schema/${file}`,
+    $id: `https://github.com/embodied-datasets/embodied-datasets/blob/main/schema/${file}`,
     title,
     ...json,
   };

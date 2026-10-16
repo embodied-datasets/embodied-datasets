@@ -5,7 +5,7 @@ The dataset, family, organization and vocabulary records in this repository
 exports under `/export/` are licensed under the
 [Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
 
-Attribution: "Embodied Datasets contributors, https://github.com/DanielDauner/embodied-datasets".
+Attribution: "Embodied Datasets contributors, https://github.com/embodied-datasets/embodied-datasets".
 
 The site code (`src/`, `scripts/`, configuration) is licensed under the MIT License, see `LICENSE`.
 

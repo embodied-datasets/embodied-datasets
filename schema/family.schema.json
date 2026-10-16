@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/DanielDauner/embodied-datasets/blob/main/schema/family.schema.json",
+  "$id": "https://github.com/embodied-datasets/embodied-datasets/blob/main/schema/family.schema.json",
   "title": "Embodied Datasets – dataset family record",
   "type": "object",
   "properties": {

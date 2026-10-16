@@ -1,0 +1,57 @@
+name: PR preview
+
+# Deploys a preview of every pull request from a branch in this repository to
+#   <site>/pr-preview/pr-<number>/
+# on the gh-pages branch, comments the link on the PR and removes the preview when the PR closes.
+# Pull requests from forks are skipped on purpose: building untrusted code with a write token is unsafe.
+# Fork authors can enable GitHub Pages on their fork instead; the deploy workflow adapts to the fork's owner.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        if: github.event.action != 'closed'
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+        if: github.event.action != 'closed'
+      - name: Build site for the preview path
+        if: github.event.action != 'closed'
+        env:
+          VAR_SITE_URL: ${{ vars.SITE_URL }}
+          VAR_SITE_BASE: ${{ vars.SITE_BASE }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          PR: ${{ github.event.number }}
+        run: |
+          OWNER_LC="$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
+          export SITE_URL="${VAR_SITE_URL:-https://${OWNER_LC}.github.io}"
+          if [ -n "$VAR_SITE_BASE" ]; then BASE="$VAR_SITE_BASE";
+          else case "$REPO" in *.github.io) BASE="/";; *) BASE="/$REPO";; esac; fi
+          BASE="${BASE%/}"
+          export SITE_BASE="$BASE/pr-preview/pr-$PR"
+          echo "Building preview for $SITE_URL$SITE_BASE"
+          npm run build
+      - name: Deploy or remove the preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: dist
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          action: auto

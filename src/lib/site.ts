@@ -4,7 +4,7 @@ export const SITE = {
   tagline: 'A community-maintained wiki of autonomous driving datasets, with availability as a first-class, dated, evidence-backed field.',
   description:
     'Structured records of autonomous driving datasets: sensors, annotations, maps, licences, and above all whether the data can still be downloaded today, with dated evidence.',
-  repo: 'https://github.com/DanielDauner/embodied-datasets',
+  repo: 'https://github.com/embodied-datasets/embodied-datasets',
   py123d: 'https://kesai.eu/py123d/',
   schemaVersion: '0.1.0',
 };

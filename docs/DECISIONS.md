@@ -2,6 +2,20 @@
 
 Short, dated notes on decisions that are not obvious from the code. Newest first.
 
+## 2026-10-16 – Organization, protected main, PR previews
+
+- **Hosting moved to the `embodied-datasets` GitHub organization** so that the site is not tied to a personal
+  account and contributors can be given repository access without access to anyone's profile. The repository
+  name stays `embodied-datasets`; the site lives at `https://embodied-datasets.github.io/embodied-datasets/` until
+  a custom domain is set (then `SITE_BASE=/`).
+- **Publishing is gated by branch protection, not by ownership:** pull request + review required on `main`,
+  the `validate` CI job as required check, CODEOWNERS for schema, vocabularies and site code.
+- **Pages switched from Actions-artifact deploys to the `gh-pages` branch** because GitHub Pages serves one site
+  per repository and PR previews need to coexist with it. Production is written to the branch root with
+  `pr-preview/` excluded from cleaning; previews are written to `pr-preview/pr-<n>/` by `rossjrw/pr-preview-action`.
+- **No previews for fork PRs** (would require `pull_request_target` with write permissions on untrusted code).
+  Forks get their own Pages site instead; the workflows derive URLs from the fork owner.
+
 ## 2026-10-14 – Initial slice
 
 - **Name:** "Embodied Datasets" (repository `embodied-datasets`), chosen over "Robot Datasets Wiki" because the
